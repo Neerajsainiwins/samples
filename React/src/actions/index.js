@@ -1,0 +1,13 @@
+export const FETCH_DATA = "fetch_data";
+
+// default function to display redux action format
+export function defaultFunction() {
+  let testVar = "Hello";
+  let username = { value: "parshant", isValid: true, message: "" };
+
+  // action object format being return to a reducer
+  return {
+    type: FETCH_DATA,
+    payload: username
+  };
+}

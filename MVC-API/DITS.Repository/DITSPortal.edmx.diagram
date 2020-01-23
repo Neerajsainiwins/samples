@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="b41dad3db96343f790d7b6a463a4c92d" Name="Diagram1">
+        <EntityTypeShape EntityType="DITSPortalModel.Configuration" Width="1.5" PointX="0.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.GlobalCodeCategory" Width="1.5" PointX="2.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.GlobalCode" Width="1.5" PointX="3" PointY="12.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.Role" Width="1.5" PointX="0.75" PointY="3.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.RoleScreenPermission" Width="1.5" PointX="2.75" PointY="3.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.Screen" Width="1.5" PointX="4.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.TaskActivity" Width="1.5" PointX="5.25" PointY="12.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.TaskAssignment" Width="1.5" PointX="8.25" PointY="12.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.Task" Width="1.5" PointX="3" PointY="16.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.Tb_Documents" Width="1.5" PointX="3" PointY="23.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.UserBasicDetail" Width="1.5" PointX="4.75" PointY="3.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.UserEducationDetail" Width="1.5" PointX="6.75" PointY="6.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.UserLoginDetail" Width="1.5" PointX="2.75" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.UserRole" Width="1.5" PointX="8.75" PointY="3.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.User" Width="1.5" PointX="0.75" PointY="7.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.UserWorkDetail" Width="1.5" PointX="8.75" PointY="6.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DITSPortalModel.DocumentRelation" Width="1.5" PointX="5.25" PointY="18.125" IsExpanded="true" />
+        <AssociationConnector Association="DITSPortalModel.GlobalCodes_TaskActivity_Priority_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="DITSPortalModel.GlobalCodes_TaskActivity_Status_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="DITSPortalModel.GlobalCodes_TaskAssignment_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="DITSPortalModel.Tasks_TaskActivity_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="DITSPortalModel.Users_TaskActivity_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="DITSPortalModel.Tasks_TaskAssignment_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="DITSPortalModel.Users_TaskAssignment_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="DITSPortalModel.Tasks_DocumentRelation_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="DITSPortalModel.Users_Tasks_FK" ManuallyRouted="false" />
+        <AssociationConnector Association="DITSPortalModel.Tb_Documents_DocumentRelation_FK" ManuallyRouted="false" />
+        <EntityTypeShape EntityType="DITSPortalModel.UserContactDetail" Width="1.5" PointX="10.375" PointY="10.75" />
+        <EntityTypeShape EntityType="DITSPortalModel.UserEmergencyContact" Width="1.5" PointX="7.375" PointY="0.75" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>
