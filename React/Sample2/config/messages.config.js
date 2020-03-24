@@ -3,5 +3,5 @@ export const successMessages = {
 }
 
 export const errorMessages = {
-    API_NOT_AVAILABLE: "The TOMREX system has some issues while processing your request. Please login again."
+    API_NOT_AVAILABLE: "The ABC system has some issues while processing your request. Please login again."
 };
