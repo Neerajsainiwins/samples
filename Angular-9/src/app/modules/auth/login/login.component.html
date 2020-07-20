@@ -1,0 +1,95 @@
+<div class="loginForm">
+    <div class="container">
+        <notifier-container></notifier-container>
+        <div class="row">
+            <div class="col-lg-4 col-md-6 col-sm-6 ml-auto mr-auto">
+                <form #loginForm="ngForm" (ngSubmit)="loginForm.valid && submit(loginForm)" name="loginForm" novalidate
+                    class="form ng-untouched ng-pristine ng-valid">
+                    <div class="card card-login">
+                        <div class="card-header text-center">
+                            <h4 class="card-title">Log in</h4>
+                            <div class="social-line"><a class="btn btn-just-icon btn-link btn-white"><i
+                                        class="fa fa-facebook-square"></i></a><a
+                                    class="btn btn-just-icon btn-link btn-white"><i class="fa fa-twitter"></i></a><a
+                                    class="btn btn-just-icon btn-link btn-white"><i class="fa fa-google-plus"></i></a>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <span class="bmd-form-group">
+                                <div class="input-group">
+                                    <div class="input-group-prepend"><span class="input-group-text"><i
+                                                class="material-icons">email</i></span></div>
+                                    <mat-form-field class="example-full-width" appearance="fill">
+                                        <input class="form-control" matInput placeholder="pat@example.com" name="email"
+                                            type="email" #email="ngModel" [(ngModel)]="loginFormData.email"
+                                            pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" required>
+                                        <mat-error *ngIf="email.hasError('required')">Email is <strong>required</strong>
+                                        </mat-error>
+                                        <mat-error *ngIf="email.hasError('pattern') && !email.hasError('required')">
+                                            Please enter a valid email</mat-error>
+                                    </mat-form-field>
+                                </div>
+                            </span>
+                            <span class="bmd-form-group">
+                                <div class="input-group">
+                                    <div class="input-group-prepend"><span class="input-group-text"><i
+                                                class="material-icons">lock_outline</i></span></div>
+                                    <mat-form-field class="example-full-width" appearance="fill">
+                                        <input class="form-control" matInput placeholder="Password" type="password"
+                                            #password="ngModel" [(ngModel)]="loginFormData.password" name="password"
+                                            required>
+                                        <mat-error *ngIf="password.hasError('required')">Password is
+                                            <strong>required</strong>
+                                        </mat-error>
+                                    </mat-form-field>
+                                </div>
+                            </span>
+                            <p class="forgotPass text-right"><a [routerLink]="['/forgot-password']">Forgot
+                                    Password ?</a></p>
+                        </div>
+                        <div class="card-footer justify-content-center form-group"><button
+                                class="btn btn-blue btn-md">Lets Go</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+      <!-- <notifier-container></notifier-container>
+       <div class="row">
+          <div class="col-lg-4 col-md-6 col-sm-6 ml-auto mr-auto">
+             <form #loginForm="ngForm" (ngSubmit)="loginForm.valid && submit(loginForm)" name="loginForm" novalidate class="form ng-untouched ng-pristine ng-valid">
+                <div class="card card-login">
+                   <div class="card-header text-center">
+                      <h4 class="card-title">Log in</h4>
+                      <div class="social-line"><a href="#" class="btn btn-just-icon btn-link btn-white"><i class="fa fa-facebook-square"></i></a><a href="#" class="btn btn-just-icon btn-link btn-white"><i class="fa fa-twitter"></i></a><a href="#" class="btn btn-just-icon btn-link btn-white"><i class="fa fa-google-plus"></i></a></div>
+                   </div>
+                   <div class="card-body">
+                      <span class="bmd-form-group">
+                         <div class="input-group">
+                            <div class="input-group-prepend"><span class="input-group-text"><i class="material-icons">email</i></span></div>
+                            <mat-form-field>
+                                <mat-label>Email</mat-label>
+                                <input matInput placeholder="pat@example.com" name="email" type="email" #email="ngModel" [(ngModel)]="loginFormData.email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" required>
+                                <mat-error *ngIf="email.hasError('required')">Please enter your email</mat-error>
+                                <mat-error *ngIf="email.hasError('pattern') && !email.hasError('required')">Please enter valid email</mat-error>
+                            </mat-form-field>
+                         </div>
+                      </span>
+                      <span class="bmd-form-group">
+                         <div class="input-group">
+                            <div class="input-group-prepend"><span class="input-group-text"><i class="material-icons">lock_outline</i></span></div>
+                            <mat-form-field>
+                                <mat-label>Password</mat-label>
+                                <input matInput placeholder="password" type="password" #password="ngModel" [(ngModel)]="loginFormData.password" name="password" required>
+                                <mat-error *ngIf="password.hasError('required')">Please enter your password</mat-error>
+                            </mat-form-field>
+                         </div>
+                      </span>
+                   </div>
+                    <div class="card-footer justify-content-center form-group"><button class="form-control btn btn-blue btn-md" (click)="submit(loginForm)">Lets Go</button></div>
+                </div>
+             </form>
+          </div>
+       </div> -->
+    </div>
+</div>

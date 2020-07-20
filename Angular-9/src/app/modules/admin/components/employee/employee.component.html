@@ -1,0 +1,205 @@
+<div class="mainContent">
+    <div class="container-fluid">
+        <div class="btn-position">
+            <button class="btn btn-primary btn-medium add-btn" (click)="open(mymodal)">
+                Add
+            </button>
+            <button class="btn btn-primary btn-medium mr-4" [routerLink]="['/admin/roles-permissions']">
+                Manage Roles
+            </button>
+            <button class="btn btn-primary btn-medium" [routerLink]="['/admin/admin-screens']">
+                Manage Screens
+            </button>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="material-icons">assignment</i></div>
+                        <h4 class="card-title">Employee Data</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">#</th>
+                                    <th>Name</th>
+                                    <th>Job Position</th>
+                                    <th>Since</th>
+                                    <th class="text-right">Salary</th>
+                                    <th class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-center">1</td>
+                                    <td>Andrew Mike</td>
+                                    <td>Develop</td>
+                                    <td>2013</td>
+                                    <td class="text-right">€ 99,225</td>
+                                    <td class="td-actions text-right">
+                                    <button type="button" class="btn btn-info btn-sm blue">
+                                        <span class="mat-button-wrapper"><i class="material-icons">person</i></span>
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm green">
+                                        <span class="mat-button-wrapper"><i class="material-icons">edit</i></span>
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm red">
+                                        <span class="mat-button-wrapper"><i class="material-icons">close</i></span>
+                                    </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">2</td>
+                                    <td>John Doe</td>
+                                    <td>Design</td>
+                                    <td>2012</td>
+                                    <td class="text-right">€ 89,241</td>
+                                <td class="td-actions text-right">
+                                    <button type="button" class="btn btn-info btn-sm blue">
+                                        <span class="mat-button-wrapper"><i class="material-icons">person</i></span>
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm green">
+                                        <span class="mat-button-wrapper"><i class="material-icons">edit</i></span>
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm red">
+                                        <span class="mat-button-wrapper"><i class="material-icons">close</i></span>
+                                    </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">3</td>
+                                    <td>Alex Mike</td>
+                                    <td>Design</td>
+                                    <td>2010</td>
+                                    <td class="text-right">€ 92,144</td>
+                                <td class="td-actions text-right">
+                                    <button type="button" class="btn btn-info btn-sm blue">
+                                        <span class="mat-button-wrapper"><i class="material-icons">person</i></span>
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm green">
+                                        <span class="mat-button-wrapper"><i class="material-icons">edit</i></span>
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm red">
+                                        <span class="mat-button-wrapper"><i class="material-icons">close</i></span>
+                                    </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">4</td>
+                                    <td>Mike Monday</td>
+                                    <td>Marketing</td>
+                                    <td>2013</td>
+                                    <td class="text-right">€ 49,990</td>
+                                <td class="td-actions text-right">
+                                    <button type="button" class="btn btn-info btn-sm blue">
+                                        <span class="mat-button-wrapper"><i class="material-icons">person</i></span>
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm green">
+                                        <span class="mat-button-wrapper"><i class="material-icons">edit</i></span>
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm red">
+                                        <span class="mat-button-wrapper"><i class="material-icons">close</i></span>
+                                    </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">5</td>
+                                    <td>Paul Dickens</td>
+                                    <td>Communication</td>
+                                    <td>2015</td>
+                                    <td class="text-right">€ 69,201</td>
+                                <td class="td-actions text-right">
+                                    <button type="button" class="btn btn-info btn-sm blue">
+                                        <span class="mat-button-wrapper"><i class="material-icons">person</i></span>
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm green">
+                                        <span class="mat-button-wrapper"><i class="material-icons">edit</i></span>
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm red">
+                                        <span class="mat-button-wrapper"><i class="material-icons">close</i></span>
+                                    </button>
+                                    </td>
+                                </tr>
+                                <!---->
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template #mymodal let-modal>
+        <div class="modal-header">
+          <h4 class="modal-title" id="modal-basic-title">Employee Form</h4>
+          <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+            <form class="example-form">
+                <div class="row">
+                    <div class="col-4">
+                        <div class="form-group loginField">
+                            <label>Email</label>
+                            <input type="text" placeholder="email">
+                            <!-- <mat-form-field class="example-full-width">
+                                <mat-label>Name</mat-label>
+                                <input matInput placeholder="name" name="name" type="text">                        
+                            </mat-form-field> -->
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group loginField">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Last Name</mat-label>
+                                <input matInput placeholder="last name" name="lastname" type="text">                        
+                            </mat-form-field>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group loginField">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Email</mat-label>
+                                <input matInput placeholder="pat@example.com" name="email" type="email">                                
+                            </mat-form-field>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group loginField">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Mobile Number</mat-label>
+                                <textarea matInput placeholder="Mobile Number" name="mobile" type="text"></textarea>                       
+                            </mat-form-field>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group loginField">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Designation</mat-label>
+                                <input matInput placeholder="designation" name="designation" type="text">                        
+                            </mat-form-field>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group loginField">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>DOB</mat-label>
+                                <input matInput placeholder="dob" name="DOB" type="date">                                
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </div>
+                
+            </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Ok</button>
+        </div>
+    </ng-template>
+
+</div>

@@ -1,0 +1,73 @@
+<div class="loginForm">
+   <div class="container">
+      <notifier-container></notifier-container>
+      <div class="row">
+         <div class="col-lg-4 col-md-6 col-sm-8 ml-auto mr-auto">
+
+            <form #registeredform="ngForm" (ngSubmit)="registeredform.valid && registered(registeredform)" novalidate>
+               <div class="card card-login">
+                  <div class="card-header text-center">
+                     <h4 class="card-title">Register</h4>
+                     <div class="social-line"><a class="btn btn-just-icon btn-link btn-white"><i
+                              class="fa fa-facebook-square"></i></a><a class="btn btn-just-icon btn-link btn-white"><i
+                              class="fa fa-twitter"></i></a><a class="btn btn-just-icon btn-link btn-white"><i
+                              class="fa fa-google-plus"></i></a></div>
+                  </div>
+                  <div class="card-body">
+                     <span class="bmd-form-group">
+                        <div class="input-group form-group">
+                           <div class="input-group-prepend"><span class="input-group-text"><i
+                                    class="material-icons">email</i></span></div>
+                           <mat-form-field class="example-full-width" appearance="fill">
+                              <input class="form-control" matInput placeholder="pat@example.com" name="email"
+                                 type="email" #email="ngModel" [(ngModel)]="registeredFormData.email"
+                                 pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" required>
+                              <mat-error *ngIf="email.hasError('required')">Email is <strong>required</strong>
+                              </mat-error>
+                              <mat-error *ngIf="email.hasError('pattern') && !email.hasError('required')">Please enter
+                                 a valid email</mat-error>
+                           </mat-form-field>
+                        </div>
+                     </span>
+                     <span class="bmd-form-group">
+                        <div class="input-group">
+                           <div class="input-group-prepend"><span class="input-group-text"><i
+                                    class="material-icons">lock_outline</i></span></div>
+                           <mat-form-field class="example-full-width" appearance="fill">
+                              <input class="form-control" matInput placeholder="Password" type="password"
+                                 #password="ngModel" [(ngModel)]="registeredFormData.password" name="password"
+                                 minlength="8" required>
+                              <mat-error *ngIf="password.hasError('required')">Password is <strong>required</strong>
+                              </mat-error>
+                              <mat-error *ngIf="password.hasError('minlength')">Password must be 8 characters long
+                              </mat-error>
+                           </mat-form-field>
+                        </div>
+                     </span>
+                     <span class="bmd-form-group">
+                        <div class="input-group">
+                           <div class="input-group-prepend"><span class="input-group-text"><i
+                                    class="material-icons">lock_outline</i></span></div>
+                           <mat-form-field class="example-full-width" appearance="fill">
+                              <input class="form-control" matInput placeholder="Confirm Password" type="password"
+                                 #confirmPassword="ngModel" [(ngModel)]="registeredFormData.confirmPassword"
+                                 name="confirmPassword" appConfirmEqualValidator="password" required>
+                              <mat-error *ngIf="confirmPassword.hasError('required')">Confirm password
+                                 is <strong>required</strong>
+                              </mat-error>
+                              <mat-error
+                                 *ngIf="confirmPassword.hasError('notEqual') && !confirmPassword.hasError('required')">
+                                 Password and Confirm Password does not match</mat-error>
+                           </mat-form-field>
+                        </div>
+                     </span>
+                  </div>
+                  <div class="card-footer justify-content-center form-group"><button class="btn btn-blue btn-md">Lets
+                        Go</button>
+                  </div>
+               </div>
+            </form>
+         </div>
+      </div>
+   </div>
+</div>

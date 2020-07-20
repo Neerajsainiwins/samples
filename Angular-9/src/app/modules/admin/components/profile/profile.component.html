@@ -1,0 +1,382 @@
+<div class="mainContent">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <notifier-container></notifier-container>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="material-icons">person</i></div>
+                        <h4 class="card-title">
+                            Basic Information
+                            <div class="editbutton"><i class="fa fa-pencil"></i> </div>
+                        </h4>
+                    </div>
+                    <form action="" method="post">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="profileImage">
+                                        <img src="assets/images/profile.png" alt="image" title="profile">
+                                    </div>
+                                    <div class="profileDesc">
+                                        <h2>projecttek Innovations</h2>
+                                        <p>admin@admin.com</p>
+                                        <div id="mybutton">
+                                            <input type="file" id="myfile" name="upload">
+                                            <a>Change Photo</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-7 ml-auto">
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>First Name</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon1"><i
+                                                                class="fa fa-user" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <mat-form-field class="example-full-width" appearance="fill">
+                                                        <input class="form-control" matInput placeholder="First Name"
+                                                            #firstName="ngModel" [(ngModel)]="profileData.firstName"
+                                                            name="firstName" required>
+                                                        <mat-error *ngIf="firstName.hasError('required')">First name is
+                                                            <strong>required</strong>
+                                                        </mat-error>
+                                                    </mat-form-field>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>Last Name</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon2"><i
+                                                                class="fa fa-user" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <mat-form-field class="example-full-width" appearance="fill">
+                                                        <input class="form-control" matInput placeholder="Last Name"
+                                                            #lastName="ngModel" [(ngModel)]="profileData.lastName"
+                                                            name="lastName" required>
+                                                        <mat-error *ngIf="lastName.hasError('required')">Last name is
+                                                            <strong>required</strong>
+                                                        </mat-error>
+                                                    </mat-form-field>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            <div class="profileForm">
+                                                <label>Date of Birth </label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon3"><i
+                                                                class="fa fa-calendar" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <mat-form-field>
+                                                        <input matInput [matDatepicker]="birthpicker"
+                                                            #dateOfBirth="ngModel" [(ngModel)]="profileData.dateOfBirth"
+                                                            name="dateOfBirth" required>
+                                                        <mat-datepicker-toggle matSuffix [for]="birthpicker">
+                                                        </mat-datepicker-toggle>
+                                                        <mat-datepicker #birthpicker></mat-datepicker>
+                                                    </mat-form-field>
+                                                    <mat-error *ngIf="dateOfBirth.hasError('required')">
+                                                        Date Of Birth is <strong>required</strong>
+                                                    </mat-error>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            <div class="profileForm">
+                                                <label>Email</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon5"><i
+                                                                class="fa fa-envelope" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <mat-form-field class="example-full-width" appearance="fill">
+                                                        <input class="form-control" matInput
+                                                            placeholder="Official email" #officialEmail="ngModel"
+                                                            [(ngModel)]="profileData.officialEmail" name="officialEmail"
+                                                            required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$">
+                                                        <mat-error *ngIf="officialEmail.hasError('required')">Official
+                                                            Email is <strong>required</strong>
+                                                        </mat-error>
+                                                        <mat-error
+                                                            *ngIf="officialEmail.hasError('pattern') && !officialEmail.hasError('required')">
+                                                            Please enter a valid email</mat-error>
+                                                    </mat-form-field>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="info">
+                                                <h4>Personal Information</h4>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>User Name</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon1"><i
+                                                                class="fa fa-user" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <mat-form-field class="example-full-width" appearance="fill">
+                                                        <input class="form-control" matInput placeholder="User Name"
+                                                            #userName="ngModel" [(ngModel)]="profileData.userName"
+                                                            name="userName" required>
+                                                        <mat-error *ngIf="userName.hasError('required')">
+                                                            User name is <strong>required</strong>
+                                                        </mat-error>
+                                                    </mat-form-field>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>Gender</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon2"><i
+                                                                class="fa fa-user" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <select class="form-control" #gender="ngModel"
+                                                        [(ngModel)]="profileData.gender" name=gender
+                                                        placeholder="Gender" required>
+                                                        <option value="null" disabled="true" [selected]="true">Choose
+                                                            your
+                                                            gender
+                                                        </option>
+                                                        <option value="0">Male</option>
+                                                        <option value="1">Female</option>
+                                                        <option value="2 Trainee">Other</option>
+                                                    </select>
+                                                    <mat-error *ngIf="gender.hasError('required')">
+                                                        Gender is <strong>required</strong>
+                                                    </mat-error>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>Designation</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon3"><i
+                                                                class="fa fa-user" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <select class="form-control" name="designation"
+                                                        #designation="ngModel" [(ngModel)]="profileData.designation">
+                                                        <option value="null" disabled="true" [selected]="true">Select
+                                                            Designation
+                                                        </option>
+                                                        <option value="0">Trainee</option>
+                                                        <option value="1">Software Associate</option>
+                                                        <option value="2 Trainee">BD Trainee</option>
+                                                        <option value="3">BD</option>
+                                                        <option value="4 Manager">HR Manager</option>
+                                                        <option value="5">DM</option>
+                                                    </select>
+                                                    <mat-error *ngIf="designation.hasError('required')">
+                                                        Designation is <strong>required</strong>
+                                                    </mat-error>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>Phone</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon5"><i
+                                                                class="fa fa-phone-square"
+                                                                aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <mat-form-field class="example-full-width" appearance="fill">
+                                                        <input class="form-control" matInput placeholder="Phone number"
+                                                            #phone="ngModel" [(ngModel)]="profileData.phone"
+                                                            name="phone" required minlength="10" maxlength="10">
+                                                        <mat-error *ngIf="phone.hasError('required')">
+                                                            Phone number is <strong>required</strong>
+                                                        </mat-error>
+                                                        <mat-error *ngIf="phone.hasError('minlength')">
+                                                            Phone number is <strong>invalid</strong>
+                                                        </mat-error>
+                                                    </mat-form-field>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>Alternate No.</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon5"><i
+                                                                class="fa fa-envelope" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <mat-form-field class="example-full-width" appearance="fill">
+                                                        <input class="form-control" matInput
+                                                            placeholder="Alternate number" #alternateNumber="ngModel"
+                                                            [(ngModel)]="profileData.alternateNumber"
+                                                            name="alternateNumber" minlength="10" maxlength="10"
+                                                            required>
+                                                        <mat-error *ngIf="alternateNumber.hasError('required')">
+                                                            Alternate Number is <strong>required</strong>
+                                                        </mat-error>
+                                                        <mat-error *ngIf="alternateNumber.hasError('minlength')">
+                                                            Phone number is <strong>invalid</strong>
+                                                        </mat-error>
+                                                    </mat-form-field>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>Skype Id</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon5"><i
+                                                                class="fa fa-envelope" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <mat-form-field class="example-full-width" appearance="fill">
+                                                        <input class="form-control" matInput placeholder="Skype id"
+                                                            #skype="ngModel" [(ngModel)]="profileData.skype"
+                                                            name="skype"
+                                                            pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" required>
+                                                        <mat-error *ngIf="skype.hasError('required')">
+                                                            Skype id is <strong>required</strong>
+                                                        </mat-error>
+                                                        <mat-error
+                                                            *ngIf="skype.hasError('pattern') && !skype.hasError('required')">
+                                                            Please enter a valid email</mat-error>
+                                                    </mat-form-field>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>PAN No.</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon5"><i
+                                                                class="fa fa-envelope" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <mat-form-field class="example-full-width" appearance="fill">
+                                                        <input class="form-control" matInput placeholder="eg.AAAPL1234C"
+                                                            #pan="ngModel"
+                                                            pattern="^([a-zA-Z]){5}([0-9]){4}([a-zA-Z]){1}?$"
+                                                            [(ngModel)]="profileData.pan" name="pan" required>
+                                                        <mat-error *ngIf="pan.hasError('required')">
+                                                            Pan number is <strong>required</strong>
+                                                        </mat-error>
+                                                        <mat-error *ngIf="pan.hasError('pattern')">
+                                                            Pan number is <strong>invalid</strong>
+                                                        </mat-error>
+                                                    </mat-form-field>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>Blood Group</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon5"><i
+                                                                class="fa fa-envelope" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <select class="form-control" #bloodGroup="ngModel"
+                                                        [(ngModel)]="profileData.bloodGroup" name="bloodGroup" required>
+                                                        <option value="null" disabled="true" [selected]="true">Select
+                                                            Blood group
+                                                        </option>
+                                                        <option value="0">B+</option>
+                                                        <option value="0">B-</option>
+                                                        <option value="1">O+</option>
+                                                        <option value="2 Trainee">AB</option>
+                                                        <option value="2 Trainee">AB-</option>
+                                                        <option value="3">A-</option>
+                                                        <option value="3">A</option>
+                                                        <option value="3">A+</option>
+                                                        <mat-error *ngIf="bloodGroup.hasError('required')">
+                                                            Blood Group is <strong>required</strong>
+                                                        </mat-error>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>Date of Joining</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon5"><i
+                                                                class="fa fa-calendar" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <mat-form-field>
+                                                        
+                                                        <input matInput [matDatepicker]="joiningpicker"
+                                                            #dateOfJoining="ngModel"
+                                                            [(ngModel)]="profileData.dateOfJoining" name="dateOfJoining"
+                                                            required>
+                                                        <mat-datepicker-toggle matSuffix [for]="joiningpicker">
+                                                        </mat-datepicker-toggle>
+                                                        <mat-datepicker #joiningpicker></mat-datepicker>
+                                                    </mat-form-field>
+                                                    <mat-error *ngIf="dateOfJoining.hasError('required')">
+                                                        Date Of Joining is <strong>required</strong>
+                                                    </mat-error>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="profileForm">
+                                                <label>Date of Leaving</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon5"><i
+                                                                class="fa fa-calendar" aria-hidden="true"></i></span>
+                                                    </div>
+                                                    <mat-form-field>
+                                                        <input matInput [matDatepicker]="leavingpicker"
+                                                            #dateOfLeaving="ngModel"
+                                                            [(ngModel)]="profileData.dateOfLeaving" name="dateOfLeaving"
+                                                            required>
+                                                        <mat-datepicker-toggle matSuffix [for]="leavingpicker">
+                                                        </mat-datepicker-toggle>
+                                                        <mat-datepicker #leavingpicker></mat-datepicker>
+                                                    </mat-form-field>
+                                                    <mat-error *ngIf="dateOfJoining.hasError('required')">
+                                                        Date Of Leaving is <strong>required</strong>
+                                                    </mat-error>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            <div class="machineForm rgt">
+                                                <input type="submit" class="btn btn-blue" name="update" value="SAVE"
+                                                    (click)="saveProfile()">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,263 @@
+<!-- <section class="mainContent">
+    <div class="container">
+        <div class="row">
+            <div class="col-4">
+                <div class="card">
+                    <div class="accordion">
+                        <i class="fa fa-user"></i>
+                            Employee Management 
+                        <i class="fa fa-angle-down text-right" style="float:right"></i>
+                        <hr class="mb-0 mt-2">
+                    </div>
+                    <div class="accordion-content">
+                        <ul>
+                            <li [routerLink]="['/admin/roles-permissions']">
+                                <span>Roles</span>
+                            </li>
+                            <li [routerLink]="['/admin/employee']">    
+                                <span>Employees</span>
+                            </li>
+                            <li [routerLink]="['/admin/admin-screens']">    
+                                <span>Screens</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="btn-postion">
+                    <a class="border">Filter Roles</a>
+                    <a class="border" (click)="show()">Add Roles</a>
+                   
+                        
+                     
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="text-center">#</th>
+                            <th>Role Name</th>
+                            <th>Description</th>
+                            <th class="text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-center">1</td>
+                            <td>Sales Manager</td>
+                            <td>Sample@gmail.com</td>
+                            <td class="td-actions text-right">
+                            <button type="button" class="btn btn-info btn-sm blue">
+                                <span class="mat-button-wrapper"><i class="material-icons">person</i></span>
+                            </button>
+                            <button type="button" class="btn btn-info btn-sm green">
+                                <span class="mat-button-wrapper"><i class="material-icons">edit</i></span>
+                            </button>
+                            <button type="button" class="btn btn-info btn-sm red">
+                                <span class="mat-button-wrapper"><i class="material-icons">close</i></span>
+                            </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-center">2</td>
+                            <td>Sales Manager</td>
+                            <td>Sample@gmail.com</td>
+                            <td class="td-actions text-right">
+                                <button type="button" class="btn btn-info btn-sm blue">
+                                    <span class="mat-button-wrapper"><i class="material-icons">person</i></span>
+                                </button>
+                                <button type="button" class="btn btn-info btn-sm green">
+                                    <span class="mat-button-wrapper"><i class="material-icons">edit</i></span>
+                                </button>
+                                <button type="button" class="btn btn-info btn-sm red">
+                                    <span class="mat-button-wrapper"><i class="material-icons">close</i></span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-center">3</td>
+                            <td>Sales Manager</td>
+                            <td>Sample@gmail.com</td>
+                            <td class="td-actions text-right">
+                                <button type="button" class="btn btn-info btn-sm blue">
+                                    <span class="mat-button-wrapper"><i class="material-icons">person</i></span>
+                                </button>
+                                <button type="button" class="btn btn-info btn-sm green">
+                                    <span class="mat-button-wrapper"><i class="material-icons">edit</i></span>
+                                </button>
+                                <button type="button" class="btn btn-info btn-sm red">
+                                    <span class="mat-button-wrapper"><i class="material-icons">close</i></span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-center">4</td>
+                            <td>Sales Manager</td>
+
+                            <td>Sample@gmail.com</td>
+                            <td class="td-actions text-right">
+                                <button type="button" class="btn btn-info btn-sm blue">
+                                    <span class="mat-button-wrapper"><i class="material-icons">person</i></span>
+                                </button>
+                                <button type="button" class="btn btn-info btn-sm green">
+                                    <span class="mat-button-wrapper"><i class="material-icons">edit</i></span>
+                                </button>
+                                <button type="button" class="btn btn-info btn-sm red">
+                                    <span class="mat-button-wrapper"><i class="material-icons">close</i></span>
+                                </button>
+                            </td>
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div  *ngIf="sideNavbar">
+        <div class="side-navbar" style="background-color: lightgray; width: 500px;">
+            <div class="container">
+                <div class="padding">
+                    Add Roles
+                    <button class="btn btn-primary" (click)="hidden()" style="float:right">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<style>
+    
+    .side-navbar{
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 100%;
+    }
+    .padding{
+       
+       padding-top: 60px;
+       padding-bottom: 60px;
+    }
+</style> -->
+
+
+
+
+<!--middle section-->
+<div class="mainContent">
+    <div class="container-fluid">
+        <div class="btn-position">
+            <button class="btn btn-primary btn-padding" (click)="open(CreateModel)">
+                Add
+            </button>
+            <br>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="material-icons">assignment</i></div>
+                        <h4 class="card-title">Roles & Permissions</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th><a>Role Name</a></th>
+                                    <th>Description</th>
+                                    <th class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let role of roleList">
+                                    <td>{{role.roleName}}</td>
+                                    <td>{{role.roleDescription}}</td>
+                                    <td class="td-actions text-right">
+                                        <button type="button" class="btn btn-info btn-sm blue">
+                                            <span class="mat-button-wrapper"><i class="material-icons">person</i></span>
+                                        </button>
+                                        <button type="button" class="btn btn-info btn-sm green">
+                                            <span class="mat-button-wrapper"><i class="material-icons" (click)="open(UpdateModel)">edit</i></span>
+                                        </button>
+                                        <button type="button" class="btn btn-info btn-sm red" (click)="removeRole(role.roleId, role.userId)">
+                                            <span class="mat-button-wrapper"><i class="material-icons">close</i></span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <!---->
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create role pop-up -->
+    <ng-template #CreateModel let-modal>
+        <div class="modal-header">
+          <h4 class="modal-title" id="modal-basic-title">Role & Permissions</h4>
+          <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+            <form class="example-form" #roleForm="ngForm" (ngSubmit)="roleForm.valid && submit(roleForm)" name="roleForm" novalidate>
+                <div class="form-group">
+                    <label>Role Name</label>
+                    <input class="form-control" placeholder="User Role" name="roleName"
+                    type="text" #roleName="ngModel" [(ngModel)]="roleFormData.roleName"
+                    required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input class="form-control" placeholder="Description" name="description"
+                    type="text" #description="ngModel" [(ngModel)]="roleFormData.description"
+                    required>
+                </div>                           
+            </form>
+        </div>
+        <div class="modal-footer" (click)="modal.close('Save click')">
+            <button class="btn btn-primary" (click)="submit(roleForm)">
+                Save
+            </button>
+        </div>
+    </ng-template>
+
+    <!-- Update role pop-up -->
+
+    <ng-template #UpdateModel let-modal>
+        <div class="modal-header">
+          <h4 class="modal-title" id="modal-basic-title">Role & Permissions</h4>
+          <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+            <form class="example-form" #roleForm="ngForm" (ngSubmit)="roleForm.valid && update(roleForm)" name="roleForm" novalidate>
+                <div class="form-group">
+                    <label>Role Name</label>
+                    <input class="form-control" placeholder="User Role" name="roleName"
+                    type="text" #roleName="ngModel" [(ngModel)]="roleList.roleName"
+                    required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input class="form-control" placeholder="Description" name="description"
+                    type="text" #description="ngModel" [(ngModel)]="roleList.description"
+                    required>
+                </div>                           
+            </form>
+        </div>
+        <div class="modal-footer" (click)="modal.close('Save click')">
+            <button class="btn btn-primary" (click)="update(roleForm)">
+                Save
+            </button>
+        </div>
+    </ng-template> 
+
+</div>
