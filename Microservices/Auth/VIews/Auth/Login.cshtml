@@ -1,0 +1,51 @@
+﻿
+@model AuthIdentityServer.Models.AccountViewModels.LoginViewModel
+
+
+@{
+    Layout = "~/VIews/Shared/_Layout.cshtml";
+}
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<link href="@Url.Content("~/libs/css/style.css")" rel="stylesheet" />
+<link href="@Url.Content("~/libs/css/font.css")" rel="stylesheet" />
+ <div class="mainWrapper">
+         <div class="mainInnerWrapper">
+         <div class="LoginWrapper">
+           <div class="logo">
+             <img src="@Url.Content("~/images/logo.svg")" alt="Images" />
+            </div>
+            <div class="loginForm login">
+                <h2> Welcome!</h2>
+                <p>Please login to your account</p>
+                <form  asp-controller="Auth" asp-action="Login" method="post">
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    <div class="formControl addPadding">
+                        <input type="text" class="form-control" asp-for="Email" placeholder="Email"/>
+                         @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger" })
+                        <img src="@Url.Content("~/images/envelop-icon.svg")" alt="Images" />
+                    </div>
+                      <div class="formControl addPadding">
+                        <input type="password" class="form-control" asp-for="Password" placeholder="Password"/>
+                         @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+                        <img src="@Url.Content("~/images/lock-icon.svg")" alt="Images" />
+                    </div>
+                    <div>
+                       @Html.ValidationSummary(true)
+                    </div>
+                    <div class="actionBtn">
+                        <button class="sc-dZkiqo hmhLkp">Login</button>
+                         <p class="link themeColor" style="cursor: pointer;">Forgot Password ?</p>
+                    </div>
+                    <p>Don't have an account ? <a asp-controller="Auth" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Register now</a></p>
+                    
+                </form>
+           </div>
+         </div>
+         <div class="loginGrapgicsImage"><img src="@Url.Content("~/images/graphics-image.svg")" alt="Images" /></div>
+         </div>
+         </div>
+
+
+

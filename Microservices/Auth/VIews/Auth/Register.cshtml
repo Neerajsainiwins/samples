@@ -1,0 +1,162 @@
+﻿@model AuthIdentityServer.Models.AccountViewModels.RegisterViewModel
+@{
+    Layout = "~/VIews/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script> 
+<link href="@Url.Content("~/libs/css/style.css")" rel="stylesheet" />
+<link href="@Url.Content("~/libs/css/font.css")" rel="stylesheet" />
+
+
+<div class="mainWrapper">
+    <div class="mainInnerWrapper">
+        <div class="LoginWrapper">
+            <div class="logo">
+                <img src="@Url.Content("~/images/logo.svg")" alt="Images" />
+            </div>
+            <div class="loginForm register">
+                <h2> Register an account </h2>
+                <form class="RegisterForm" asp-controller="Auth" asp-action="Register" method="post">
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    <div class="formControl addPadding">
+                        <label for="email">First name:</label>
+                        <input class="form-control" asp-for="User.FirstName">
+                        @Html.ValidationMessageFor(model => model.User.FirstName, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="formControl addPadding">
+                        <label for="pwd">Last name:</label>
+                        <input type="text" class="form-control" asp-for="User.LastName">
+                        @Html.ValidationMessageFor(model => model.User.LastName, "", new { @class = "text-danger" })
+                       
+                    </div>
+                    <div class="formControl addPadding">
+                        <label for="email">Business email:</label>
+                        <input class="form-control" asp-for="Email">
+                        @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger" })
+                    </div>
+                     <div class="formControl addPadding">
+                        <label for="pwd">Password:</label>
+                        <input type="password" class="form-control" asp-for="Password" onkeyup="checkPasswordValidity(this);">
+                        @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+                        <div class="alertWrapper displayNone">
+                            <img src="@Url.Content("~/images/close.png")" alt="Images" /><p asp-validation-for="Password"></p>
+                            <img src="@Url.Content("~/images/close.png")" alt="Images" /><p asp-validation-for="Password"></p>
+                            <img src="@Url.Content("~/images/close.png")" alt="Images" /><p asp-validation-for="Password"></p>
+                            <img src="@Url.Content("~/images/close.png")" alt="Images" /><p asp-validation-for="Password"></p>
+                            <img src="@Url.Content("~/images/close.png")" alt="Images" /><p asp-validation-for="Password"></p>
+                        </div>
+                    </div>
+
+                     <div class="formControl addPadding">
+                        <label for="pwd">Confirm password:</label>
+                        <input type="password" class="form-control" asp-for="ConfirmPassword">
+                        @Html.ValidationMessageFor(model => model.ConfirmPassword, "", new { @class = "text-danger" })
+
+                    </div>
+                    <div>
+                       @Html.ValidationSummary(true)
+                    </div>
+                    <div class="actionBtn">
+                        <button type="submit" class="sc-dZkiqo hmhLkp btn-block" asp-controller="Auth" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Submit</button>
+                    </div>
+                        <a class="alreadyAccount" asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Already have an account</a></p>
+                </form>
+            </div>
+        </div>
+        <div class="loginGrapgicsImage"><img src="@Url.Content("~/images/graphics-image.svg")" alt="Images" /></div>
+    </div>
+</div>
+
+
+
+<script>
+
+function checkPasswordValidity(event){
+    if(event.value=="")
+    {
+        document.getElementsByTagName("p")[0].innerHTML= "1 Uppercase letter.";
+        document.getElementsByTagName("p")[0].setAttribute("class", "warningMessage");
+        document.getElementsByClassName('alertWrapper')[0].children[0].setAttribute("src", "../images/close.png");
+        document.getElementsByTagName("p")[1].innerHTML= "1 Lowercase letter";
+        document.getElementsByTagName("p")[1].setAttribute("class", "warningMessage");
+        document.getElementsByClassName('alertWrapper')[0].children[2].setAttribute("src", "../images/close.png");
+        document.getElementsByTagName("p")[2].innerHTML= "1 Digit";
+        document.getElementsByTagName("p")[2].setAttribute("class", "warningMessage");
+        document.getElementsByClassName('alertWrapper')[0].children[4].setAttribute("src", "../images/close.png");
+        document.getElementsByTagName("p")[3].innerHTML= "1 Special Character";
+        document.getElementsByTagName("p")[3].setAttribute("class", "warningMessage");
+        document.getElementsByClassName('alertWrapper')[0].children[6].setAttribute("src", "../images/close.png");
+        document.getElementsByTagName("p")[4].innerHTML= "8 Characters"; 
+        document.getElementsByTagName("p")[4].setAttribute("class", "warningMessage");
+        document.getElementsByClassName('alertWrapper')[0].children[8].setAttribute("src", "../images/close.png");
+        document.getElementsByClassName("alertWrapper")[0].classList.remove('displayBlock');
+        return false;
+    }
+  document.getElementsByClassName("alertWrapper")[0].classList.remove('displayNone');
+  const isContainsUppercase = /^(?=.*[A-Z]).*$/;
+  if (!isContainsUppercase.test(event.value)) {
+    document.getElementsByTagName("p")[0].innerHTML= "1 Uppercase letter";
+    document.getElementsByTagName("p")[0].setAttribute("class", "warningMessage");
+    document.getElementsByClassName('alertWrapper')[0].children[0].setAttribute("src", "../images/close.png");
+  }
+  else{
+      document.getElementsByTagName("p")[0].innerHTML= "1 Uppercase letter";
+      document.getElementsByTagName("p")[0].setAttribute("class", "sucessMessage");
+      document.getElementsByClassName('alertWrapper')[0].children[0].setAttribute("src", "../images/check.png");
+  }
+
+  const isContainsLowercase = /^(?=.*[a-z]).*$/;
+  if (!isContainsLowercase.test(event.value)) {
+    document.getElementsByTagName("p")[1].innerHTML= "1 Lowercase letter";
+    document.getElementsByTagName("p")[1].setAttribute("class", "warningMessage");
+    document.getElementsByClassName('alertWrapper')[0].children[2].setAttribute("src", "../images/close.png");
+  }
+  else{
+       document.getElementsByTagName("p")[1].innerHTML= "1 Lowercase letter";
+      document.getElementsByTagName("p")[1].setAttribute("class", "sucessMessage");
+      document.getElementsByClassName('alertWrapper')[0].children[2].setAttribute("src", "../images/check.png");
+  }
+
+  const isContainsNumber = /^(?=.*[0-9]).*$/;
+  if (!isContainsNumber.test(event.value)) {
+    document.getElementsByTagName("p")[2].innerHTML= "1 Digit";
+     document.getElementsByTagName("p")[2].setAttribute("class", "warningMessage");
+    document.getElementsByClassName('alertWrapper')[0].children[4].setAttribute("src", "../images/close.png");
+  }
+  else{
+      document.getElementsByTagName("p")[2].innerHTML= "1 Digit";
+      document.getElementsByTagName("p")[2].setAttribute("class", "sucessMessage");
+      document.getElementsByClassName('alertWrapper')[0].children[4].setAttribute("src", "../images/check.png");
+  }
+
+  const isContainsSymbol =
+    /^(?=.*[~`!@@#$%^&*()--+={}\[\]|\\:;"'<>,.?/_₹]).*$/;
+  if (!isContainsSymbol.test(event.value)) {
+    document.getElementsByTagName("p")[3].innerHTML= "1 Special Character";
+     document.getElementsByTagName("p")[3].setAttribute("class", "warningMessage");
+    document.getElementsByClassName('alertWrapper')[0].children[6].setAttribute("src", "../images/close.png");
+  }
+  else{
+      document.getElementsByTagName("p")[3].innerHTML= "1 Special Character";
+      document.getElementsByTagName("p")[3].setAttribute("class", "sucessMessage");
+      document.getElementsByClassName('alertWrapper')[0].children[6].setAttribute("src", "../images/check.png");
+  }
+
+  const isValidLength = /^.{8,}$/;
+  if (!isValidLength.test(event.value)) {
+    document.getElementsByTagName("p")[4].innerHTML= "8 Characters";
+    document.getElementsByTagName("p")[4].setAttribute("class", "warningMessage");
+    document.getElementsByClassName('alertWrapper')[0].children[8].setAttribute("src", "../images/close.png");
+  }
+  else{
+      document.getElementsByTagName("p")[4].innerHTML= "8 Characters";   
+      document.getElementsByTagName("p")[4].setAttribute("class", "sucessMessage");
+      document.getElementsByClassName('alertWrapper')[0].children[8].setAttribute("src", "../images/check.png");
+  }
+
+  return null;
+}
+
+</script>
