@@ -57,7 +57,7 @@ namespace AuthIdentityServer
                 .AddOpenIdConnect("oidc", options =>
                 {
                     options.SignInScheme = "Cookies";
-                    options.Authority = "https://groneproject.azurewebsites.net";
+                    options.Authority = "https://abcdefgh.azurewebsites.net";
                     //options.Authority = "https://localhost:9001";
                     options.ClientId = "react";
                     options.GetClaimsFromUserInfoEndpoint = true;
