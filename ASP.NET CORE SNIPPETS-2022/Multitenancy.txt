@@ -1,0 +1,114 @@
+Multi-tenancy
+
+    public class ClaimsDriveSession : DriveSessionBase, IDriveSession
+    {
+        private readonly IUserClaimService _userClaimService;
+        public ClaimsDriveSession(
+            IMultiTenancyConfig multiTenancy,
+            ITenantResolver tenantResolver,
+            IUserClaimService userClaimService,
+            IAmbientScopeProvider<SessionOverride> sessionOverrideScopeProvider) : base(multiTenancy, sessionOverrideScopeProvider)
+        {
+            _multiTenancy = multiTenancy;
+            TenantResolver = tenantResolver;
+            _userClaimService = userClaimService;
+        }
+        private const int DefaultTenantId = 1;
+        public override Guid? UserId
+        {
+            get
+            {
+                if (OverridedValue != null && OverridedValue.UserId.HasValue)
+                {
+                    return OverridedValue.UserId;
+                }
+                return _userClaimService.GetUserId();
+            }
+        }
+        public override string UserType
+        {
+            get
+            {
+                return _userClaimService.GetUserType();
+            }
+        }
+        public override string ViewLevelType
+        {
+            get
+            {
+                return _userClaimService.GetViewLevelType();
+            }
+        }
+        public override string ViewLevelEntityId
+        {
+            get
+            {
+                return _userClaimService.GetViewLevelEntityId();
+            }
+        }
+        public override string UserLevelType
+        {
+            get
+            {
+                return _userClaimService.GetUserLevel();
+            }
+        }
+        public override TimeZoneInfo EntityTimeZone
+        {
+            get
+            {
+                return _userClaimService.GetEntityTimeZone();
+            }
+        }
+        public override int? TenantId
+        {
+            get
+            {
+                if (OverridedValue != null && OverridedValue.TenantId.HasValue)
+                {
+                    return OverridedValue.TenantId.Value;
+                }
+                return _userClaimService.GetTenantId();
+
+            }
+        }
+        public override Guid? ImpersonatorUserId
+        {
+            get
+            {
+                return _userClaimService.GetImpersonatorUserId();
+            }
+        }
+        public override int? ImpersonatorTenantId
+        {
+            get
+            {
+                return _userClaimService.GetImpersonatorTenantId();
+            }
+        }
+        protected ITenantResolver TenantResolver { get; }
+
+        private readonly IMultiTenancyConfig _multiTenancy;
+    }
+	
+		private string TenantDbConnectionString(string connectionString)
+        {
+            return connectionString.Replace("{{ModelDatabase}}", $"Drive{GetCurrentTenantId()}");
+        }
+
+        protected virtual int? GetCurrentTenantId()
+        {
+            var _currentUnitOfWorkProvider = IocManager.Resolve<ICurrentUnitOfWorkProvider>();
+            int? sessionOrgId = GetOrgIdFromSession();
+            if (sessionOrgId != null)
+            {
+                return sessionOrgId;
+            }
+            return _currentUnitOfWorkProvider.Current.GetTenantId();
+        }
+
+        private int? GetOrgIdFromSession()
+        {
+            var driveSession = IocManager.Resolve<IDriveSession>();
+            return driveSession.TenantId ?? null;
+        }

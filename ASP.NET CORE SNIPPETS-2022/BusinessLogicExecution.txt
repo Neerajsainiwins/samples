@@ -1,0 +1,185 @@
+Controller -
+
+        [HttpGet]
+        [Route("getByFilter")]
+        public IActionResult GetByFilter(DataSourceLoadOptions loadOptions, string assignedBy = "", string assignedTo = ""
+            , int? assignmentTypeId = null, string status = "", DateTime? dateFrom = null, DateTime? dateTo = null)
+        {
+            return Ok(_assignmentService.GetByFilter(loadOptions, assignedBy, assignedTo, assignmentTypeId, status, dateFrom, dateTo));
+        }
+
+Service - 
+        public LoadResult GetByFilter(DataSourceLoadOptions loadOptions, string assignedBy = "", string assignedTo = "", int? assignmentTypeId = null, string status = "", DateTime? dateFrom = null, DateTime? dateTo = null)
+        {
+            var query = GetBaseQuery();
+            var result = _sharedAssignmentService.GetAssignmentListDTOs(query, assignedBy, assignedTo, assignmentTypeId, status, dateFrom, dateTo, loadOptions);
+            var assignToIds = result.Where(x => string.IsNullOrEmpty(x.AssignedToUserAccountName)).Select(x => x.AssignedToId).ToList();
+            if (assignToIds.Any())
+            {
+                var userOrgDic = _loginRepository.GetAll().Include(x => x.Organization).Where(x => assignToIds.Contains(x.Id)).Select(x => new { x.Id, x.Organization.OrgName }).Distinct().ToDictionary(key => key.Id, value => value.OrgName);
+                var userAccountDic = _sysUserRepository.GetAll().Include(x => x.Account)
+                    .Where(x => assignToIds.Contains(x.Id) && x.UserLevelType == "Account")
+                    .Select(x => new { x.Id, x.Account.AccountName })
+                    .Distinct().ToDictionary(key => key.Id, value => value.AccountName);
+                var userLocationDic = _sysUserRepository.GetAll().Include(x => x.Location)
+                    .Where(x => assignToIds.Contains(x.Id) && x.UserLevelType == "Location")
+                    .Select(x => new { x.Id, x.Location.LocationName })
+                    .Distinct().ToDictionary(key => key.Id, value => value.LocationName);
+                result.Where(x => string.IsNullOrEmpty(x.AssignedToUserAccountName)).ToList().ForEach(x =>
+                {
+                    if (userOrgDic.ContainsKey(x.AssignedToId))
+                    {
+                        x.AssignedToUserAccountName = x.AssignedToUserLevel == "Org" ? userOrgDic[x.AssignedToId]
+                                                    : x.AssignedToUserLevel == "Account" ? userAccountDic[x.AssignedToId]
+                                                    : x.AssignedToUserLevel == "Location" ? userLocationDic[x.AssignedToId] : "";
+                    }
+                });
+            }
+
+            var loadResult = DataSourceLoader.Load(result, loadOptions);
+            return loadResult;
+        }
+
+
+        public List<AssignmentListDTO> GetAssignmentListDTOs(IQueryable<SDC_Assignment> query, string assignedBy = "", string assignedTo = ""
+            , int? assignmentTypeId = null, string status = "", DateTime? dateFrom = null, DateTime? dateTo = null, DataSourceLoadOptions loadOptions = null)
+        {
+            Guid GetAssignmentFolderId(Guid playbookAssignmentId, Guid playbookItemFolderId)
+            {
+                var a = playbookAssignmentId.ToByteArray();
+                var b = playbookItemFolderId.ToByteArray();
+                var length = a.Length;
+                var c = new byte[length];
+                for (int i = 0; i < length; i++)
+                {
+                    c[i] = i % 2 == 0 ? a[i] : b[i];
+                }
+                var guid = new Guid(c);
+                return guid;
+            }
+
+            void InsertFolderRecursively(List<PlaybookFolderItem> allFolderItems, List<AssignmentListDTO> allAssignmentDTOs
+                , Dictionary<string, Guid> dicFolder, AssignmentListDTO currentDTO, Guid? playbookAssignmentId, int? insertIndex)
+            {
+                var folderItem = currentDTO.FolderId.HasValue ? allFolderItems.FirstOrDefault(x => x.Id == currentDTO.FolderId.Value) : null;
+                while (folderItem != null)
+                {
+                    var folderKey = $"{playbookAssignmentId}|{folderItem.Id}";
+                    if (dicFolder.TryGetValue(folderKey, out var folderId))
+                    {
+                        currentDTO.ParentId = folderId;
+                        return;
+                    }
+                    else
+                    {
+                        folderId = GetAssignmentFolderId(playbookAssignmentId.GetValueOrDefault(), folderItem.Id);
+                        dicFolder.Add(folderKey, folderId);
+
+                        var folderAssignmentDTO = GetFolderDTO(folderItem, folderId, playbookAssignmentId);
+                        allAssignmentDTOs.Insert(insertIndex.GetValueOrDefault(), folderAssignmentDTO);
+                        InsertFolderRecursively(allFolderItems, allAssignmentDTOs, dicFolder, folderAssignmentDTO, playbookAssignmentId, insertIndex);
+                    }
+                }
+            }
+
+            AssignmentListDTO GetFolderDTO(PlaybookFolderItem playbookFolderItem, Guid folderId, Guid? defaultParentId)
+            {
+                return new AssignmentListDTO()
+                {
+                    Id = folderId,
+                    ParentId = playbookFolderItem.ParentId ?? defaultParentId,
+                    ChecklistTitle = playbookFolderItem.FolderTitle,
+                    FolderId = playbookFolderItem.ParentId,
+                };
+            }
+
+            #region Filter handling
+            if (!string.IsNullOrEmpty(assignedTo))
+            {
+                var userAssignmentTo = assignedTo.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => new Guid(x)).ToList();
+                if (userAssignmentTo.Any())
+                {
+                    query = query.Where(x => userAssignmentTo.Contains(x.AssignedToId));
+                }
+            }
+
+            if (!string.IsNullOrEmpty(assignedBy))
+            {
+                var userAssignmentBy = assignedBy.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => new Guid(x)).ToList();
+                if (userAssignmentBy.Any())
+                {
+                    query = query.Where(x => userAssignmentBy.Contains(x.CreatedById));
+                }
+            }
+
+            if (dateFrom.HasValue)
+            {
+                query = query.Where(x => x.CreatedDate >= dateFrom);
+            }
+
+            if (dateTo.HasValue)
+            {
+                query = query.Where(x => x.CreatedDate < dateTo);
+            }
+
+            if (assignmentTypeId.HasValue && assignmentTypeId.Value > 0)
+            {
+                query = query.Where(x => x.AssignmentTypeId == assignmentTypeId.Value);
+            }
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                var statusArr = status.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x).ToList();
+                if (statusArr.Any() && !statusArr.Contains("All"))
+                {
+                    var statusIds = _lookupRepository.GetAll().Where(x => statusArr.Contains(x.LookupValue) && x.LookupType == "AssignmentStatuses").Select(x => x.Id).ToList();
+                    query = query.Where(x => statusIds.Contains(x.StatusId));
+                }
+            }
+            #endregion
+
+            var assignmentDTOs = GetAssignmentListDTOQuery(query, true).ToList();
+
+            #region Append the folder node in assignemt tree according to corresponding playbookItem tree
+            if (loadOptions != null && loadOptions.Group == null)
+            {
+                var loadedDTOs = DevExtreme.AspNet.Data.DataSourceLoader.Load(assignmentDTOs, loadOptions).data;
+                assignmentDTOs = new List<AssignmentListDTO>(loadedDTOs as IEnumerable<AssignmentListDTO>);
+            }
+
+            BuildAssignedToUserAccountName(assignmentDTOs);
+            BuildCompleteRate(assignmentDTOs);
+
+            var playbookIds = assignmentDTOs.Where(x => x.PlaybookId.HasValue).Select(x => x.PlaybookId.Value).Distinct().ToList();
+            var folderItemType = PlaybookItemTypes.Folder.ToString();
+            var folderItems = (
+                from pi in _playbookItemRepository.GetAll().Where(x => x.ItemType == folderItemType).ToList()
+                join pid in playbookIds on pi.PlaybookId equals pid
+                select new PlaybookFolderItem()
+                {
+                    Id = pi.Id,
+                    ParentId = pi.ParentId,
+                    FolderTitle = pi.FolderTitle,
+                    OrderNum = pi.OrderNum
+                }
+            ).ToList();
+
+            if (assignmentDTOs.Any() && folderItems.Any())
+            {
+                var dicFolder = new Dictionary<string, Guid>(StringComparer.CurrentCultureIgnoreCase);
+                var assignmentDTOShadows = new List<AssignmentListDTO>(assignmentDTOs);
+                for (int i = 0; i < assignmentDTOShadows.Count; i++)
+                {
+                    var assignmentDTO = assignmentDTOShadows[i];
+                    if (assignmentDTO.FolderId.HasValue)
+                    {
+                        var insertIndex = assignmentDTOs.IndexOf(assignmentDTO, i);
+                        InsertFolderRecursively(folderItems, assignmentDTOs, dicFolder, assignmentDTO, assignmentDTO.ParentId.GetValueOrDefault(), insertIndex);
+                    }
+                }
+            }
+            #endregion
+            return assignmentDTOs;
+        }
+
+

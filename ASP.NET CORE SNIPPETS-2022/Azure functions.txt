@@ -1,0 +1,34 @@
+Controller -  
+
+[FunctionName("UpdateBusinessRequest")]
+        public async Task<SpResponseDTO> UpdateBusinessRequestAsync(
+            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "Leads/UpdateBusinessRequest")] HttpRequest req,
+            ILogger log)
+        {
+            var apiLogDTO = await _apiLogger.AddAPILog(req.HttpContext);
+            try
+            {
+                UpdateBusinessRequestDTO request = await FromBodyAsync<UpdateBusinessRequestDTO>(req);
+                SpResponseDTO businessRequestUpdate = await _leadRepository.UpdateBusinessRequestAsync(request);
+                if (businessRequestUpdate.ResponseCode != ResponseCodes.Success)
+                {
+                    throw new Exception(businessRequestUpdate.ResponseMessage);
+                }
+                await _apiLogger.UpdateAPILog(new UpdateAPILogDTO() { APILogId = apiLogDTO.APILogId, Success = true });
+                return businessRequestUpdate;
+            }
+            catch (Exception ex)
+            {
+                log.LogInformation(ex.Message);
+                await _errorLogger.HandleExceptionAsync(req.HttpContext, ex, apiLogDTO);
+            }
+            return null;
+        }
+
+
+Repository - 
+
+        public  async Task<SpResponseDTO> UpdateBusinessRequestAsync(UpdateBusinessRequestDTO updateBusinessRequestDTO)
+        {
+            return await CommandAsync<SpResponseDTO>(StoredProcedures.UpdateBusinessRequest,updateBusinessRequestDTO);
+        }

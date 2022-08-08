@@ -1,0 +1,214 @@
+Full-Text Search-
+
+ALTER PROCEDURE [dbo].[SP_FullTextSearch_PLY]
+(
+    -- Add the parameters for the stored procedure here
+    @Search VARCHAR(100),
+	@PageNo INT,
+	@PageSize INT,
+	@ItemType VARCHAR(50)
+)
+AS
+BEGIN
+
+DECLARE @CONCATSTR VARCHAR(100);
+SET @CONCATSTR= @Search;
+    SET NOCOUNT ON
+
+    -- Insert statements for procedure here
+Declare @Temp as Table(Id uniqueidentifier,PlaybookId uniqueidentifier,ChecklistId uniqueidentifier,PlayBook nvarchar(255),ChecklistType varchar(10),CheckListTitle nvarchar(255),CheckListDesc nvarchar(MAX), 
+Objective nvarchar(MAX),ProofMastery nvarchar(MAX),KeyConcepts nvarchar(MAX), CategoryName nvarchar(100), Instructions nvarchar(MAX), BestPractice nvarchar(MAX), ChecklistTaskTitle nvarchar(250),SkillProof nvarchar(MAX),Tips nvarchar(MAX),
+Contents varchar(MAX),OrignalFileName nvarchar(100),Rank int)
+
+
+DECLARE @UNI UNIQUEIDENTIFIER;
+SET @UNI = NEWID();
+IF @ItemType='Playbook'  OR @ItemType='All'
+BEGIN
+ INSERT INTO @Temp 
+ SELECT
+	NEWID() AS Id,
+	P.PlaybookId,
+	C.ChecklistId,
+	'' AS Playbook,
+	C.ChecklistType,
+	C.ChecklistTitle,
+	C.CheckListDesc,
+	C.Objective,
+	C.ProofOfMastery,
+	C.KeyConcepts,
+	CHKCAT.CategoryName,
+	'' AS Instructions,
+	'' AS BestPractice,
+	'' AS ChecklistTaskTitle,
+	'' AS SkillProof,
+	'' AS Tips,
+	'' as Contents,
+	'' AS [OriginalFileName],
+	(ISNULL(FC.[Rank],0)+ISNULL(FCHKCAT.[Rank],0) + ISNULL(FCHKCAT.[Rank],0)) AS Rank
+	FROM SDC_Checklists AS C
+	 LEFT JOIN SDC_PlaybookItems AS P ON P.PlaybookId=C.ChecklistId
+	 LEFT JOIN SDC_ChecklistsInCategories AS CHKINCAT ON CHKINCAT.ChecklistId=C.ChecklistId
+	 LEFT JOIN SDC_ChecklistCategories AS CHKCAT ON CHKCAT.CheckListCategoryId= CHKINCAT.ChecklistCategoryId
+	 LEFT JOIN FREETEXTTABLE(SDC_Checklists,(ChecklistTitle, CheckListDesc, Objective,ProofOfMastery,KeyConcepts),@SEARCH) AS FC ON FC.[Key]=C.ChecklistId
+	 LEFT JOIN FREETEXTTABLE(SDC_ChecklistCategories,CategoryName,@SEARCH) AS FCHKCAT ON FCHKCAT.[Key]=CHKINCAT.ChecklistCategoryId
+   WHERE c.ChecklistType='Playbook'
+   ORDER BY (ISNULL(FC.[Rank],0) +ISNULL(FCHKCAT.[Rank],0) + ISNULL(FCHKCAT.[Rank],0)) DESC
+END
+IF @ItemType='Checklist' OR @ItemType='All'
+BEGIN
+ INSERT INTO @Temp
+ SELECT
+	NEWID() AS Id,
+	p.PlaybookId,
+	C.ChecklistId,
+	'' AS Playbook,
+	C.ChecklistType,
+	C.ChecklistTitle,
+	C.CheckListDesc,
+	C.Objective,
+	C.ProofOfMastery,
+	C.KeyConcepts,
+	CHKCAT.CategoryName,
+	CHKTASK.Instructions,
+	CHKTASK.BestPractice,
+	CHKTASK.ChecklistTaskTitle,
+	CHKTASK.SkillProof,
+	CHKTASK.Tips ,
+	'' as Contents,
+	'' AS [OriginalFileName],
+	(ISNULL(FC.[Rank],0) + ISNULL(FCHKCAT.[Rank],0) + ISNULL(FCHKCAT.[Rank],0) + ISNULL(FCHKTSK.[Rank],0)) AS Rank
+	FROM SDC_Checklists AS C
+	 LEFT JOIN SDC_ChecklistTasks AS CHKTASK ON CHKTASK.ChecklistId=C.ChecklistId
+	 LEFT JOIN SDC_PlaybookItems AS P ON P.ChecklistId=C.ChecklistId
+	 LEFT JOIN SDC_ChecklistsInCategories AS CHKINCAT ON CHKINCAT.ChecklistId=C.ChecklistId
+	 LEFT JOIN SDC_ChecklistCategories AS CHKCAT ON CHKCAT.CheckListCategoryId= CHKINCAT.ChecklistCategoryId
+	 LEFT JOIN FREETEXTTABLE(SDC_Checklists,(ChecklistTitle, ChecklistTitle, CheckListDesc, Objective,ProofOfMastery,KeyConcepts),@SEARCH) AS FC ON FC.[Key]=C.ChecklistId
+	 LEFT JOIN FREETEXTTABLE(SDC_ChecklistCategories,CategoryName,@SEARCH) AS FCHKCAT ON FCHKCAT.[Key]=CHKINCAT.ChecklistCategoryId
+	 LEFT JOIN FREETEXTTABLE(SDC_ChecklistTasks,(ChecklistTaskTitle,Instructions,BestPractice,Tips,SkillProof),@SEARCH) AS FCHKTSK ON FCHKTSK.[Key]=CHKTASK.ChecklistTaskId
+   WHERE c.ChecklistType='Checklist'
+   ORDER BY (ISNULL(FC.[Rank],0) +ISNULL(FCHKCAT.[Rank],0) + ISNULL(FCHKCAT.[Rank],0) + ISNULL(FCHKTSK.[Rank],0)) DESC
+END
+IF @ItemType='Document'  OR @ItemType='All'
+BEGIN
+ INSERT INTO @Temp 
+ SELECT
+	NEWID() AS Id,
+	p.PlaybookId,
+	C.ChecklistId,
+	'' AS Playbook,
+	C.ChecklistType,
+	C.ChecklistTitle,
+	C.CheckListDesc,
+	C.Objective,
+	C.ProofOfMastery,
+	C.KeyConcepts,
+	CHKCAT.CategoryName,
+	'' AS Instructions,
+	'' AS BestPractice,
+	'' AS ChecklistTaskTitle,
+	'' AS SkillProof,
+	'' AS Tips,
+	Dp.Content,
+	'' AS [OriginalFileName],
+	(ISNULL(FC.[Rank],0) +ISNULL(FCHKCAT.[Rank],0) + ISNULL(FDP.[Rank],0)) AS Rank
+	      FROM SDC_Checklists AS C
+	 LEFT JOIN SDC_PlaybookItems AS P ON P.ChecklistId=C.ChecklistId
+	 LEFT JOIN SDC_ChecklistsInCategories AS CHKINCAT ON CHKINCAT.ChecklistId=C.ChecklistId
+	 LEFT JOIN SDC_ChecklistCategories AS CHKCAT ON CHKCAT.CheckListCategoryId= CHKINCAT.ChecklistCategoryId
+	 LEFT JOIN SDC_DocumentProperties as DP on  DP.ChecklistId=C.ChecklistId
+	 LEFT JOIN FREETEXTTABLE(SDC_Checklists,(ChecklistTitle, ChecklistTitle, CheckListDesc, Objective,ProofOfMastery,KeyConcepts),@SEARCH) AS FC ON FC.[Key]=C.ChecklistId
+	 LEFT JOIN FREETEXTTABLE(SDC_ChecklistCategories,CategoryName,@SEARCH) AS FCHKCAT ON FCHKCAT.[Key]=CHKINCAT.ChecklistCategoryId
+	 LEFT JOIN FREETEXTTABLE(SDC_DocumentProperties,Content,@SEARCH) AS FDP On FDP.[Key]=DP.DocumentPropertyId
+   WHERE c.ChecklistType='Document' AND (ISNULL(FC.[Rank],0) +ISNULL(FCHKCAT.[Rank],0) + ISNULL(FDP.[Rank],0)) >0
+   ORDER BY (ISNULL(FC.[Rank],0) +ISNULL(FCHKCAT.[Rank],0) + ISNULL(FDP.[Rank],0)) DESC
+ 
+END
+IF @ItemType='File'      OR @ItemType='All'
+BEGIN
+ INSERT INTO @Temp 
+ SELECT
+	NEWID() AS Id,
+	p.PlaybookId,
+	C.ChecklistId,
+	'' AS Playbook,
+	C.ChecklistType,
+	C.ChecklistTitle,
+	C.CheckListDesc,
+	C.Objective,
+	C.ProofOfMastery,
+	C.KeyConcepts,
+	CHKCAT.CategoryName,
+	'' AS Instructions,
+	'' AS BestPractice,
+	'' AS ChecklistTaskTitle,
+	'' AS SkillProof,
+	'' AS Tips,
+	'' AS Content,
+	PP.[OriginalFileName],
+	(ISNULL(FC.[Rank],0) +ISNULL(FCHKCAT.[Rank],0) + ISNULL(FPP.[Rank],0)) AS Rank
+	      FROM SDC_Checklists AS C
+	 LEFT JOIN SDC_PlaybookItems AS P ON P.ChecklistId=C.ChecklistId
+	 LEFT JOIN SDC_ChecklistsInCategories AS CHKINCAT ON CHKINCAT.ChecklistId=C.ChecklistId
+	 LEFT JOIN SDC_ChecklistCategories AS CHKCAT ON CHKCAT.CheckListCategoryId= CHKINCAT.ChecklistCategoryId
+	 LEFT JOIN SDC_PowerPointProperties as PP on  PP.ChecklistId=C.ChecklistId
+	 LEFT JOIN FREETEXTTABLE(SDC_Checklists,(ChecklistTitle, ChecklistTitle, CheckListDesc, Objective,ProofOfMastery,KeyConcepts),@SEARCH) AS FC ON FC.[Key]=C.ChecklistId
+	 LEFT JOIN FREETEXTTABLE(SDC_ChecklistCategories,CategoryName,@SEARCH) AS FCHKCAT ON FCHKCAT.[Key]=CHKINCAT.ChecklistCategoryId
+	 LEFT JOIN FREETEXTTABLE(SDC_PowerPointProperties,OriginalFileName,@SEARCH) AS FPP On FPP.[Key]=PP.PowerPointPropertyId
+   WHERE c.ChecklistType='File' AND (ISNULL(FC.[Rank],0) +ISNULL(FCHKCAT.[Rank],0) + ISNULL(FPP.[Rank],0)) >0
+   ORDER BY (ISNULL(FC.[Rank],0) +ISNULL(FCHKCAT.[Rank],0) + ISNULL(FPP.[Rank],0)) DESC
+END
+IF @ItemType='Diagram'   OR @ItemType='All'
+BEGIN
+ INSERT INTO @Temp 
+ SELECT
+	NEWID() AS Id,
+	p.PlaybookId,
+	C.ChecklistId,
+	'' AS Playbook,
+	C.ChecklistType,
+	C.ChecklistTitle,
+	C.CheckListDesc,
+	C.Objective,
+	C.ProofOfMastery,
+	C.KeyConcepts,
+	CHKCAT.CategoryName,
+	'' AS Instructions,
+	'' AS BestPractice,
+	'' AS ChecklistTaskTitle,
+	'' AS SkillProof,
+	'' AS Tips,
+	'' as Contents,
+	'' AS [OriginalFileName],
+	(ISNULL(FC.[Rank],0)+ISNULL(FCHKCAT.[Rank],0) + ISNULL(FCHKCAT.[Rank],0)) AS Rank
+	FROM SDC_Checklists AS C
+	 LEFT JOIN SDC_PlaybookItems AS P ON P.ChecklistId=C.ChecklistId
+	 LEFT JOIN SDC_ChecklistsInCategories AS CHKINCAT ON CHKINCAT.ChecklistId=C.ChecklistId
+	 LEFT JOIN SDC_ChecklistCategories AS CHKCAT ON CHKCAT.CheckListCategoryId= CHKINCAT.ChecklistCategoryId
+	 LEFT JOIN FREETEXTTABLE(SDC_Checklists,(ChecklistTitle, ChecklistTitle, CheckListDesc, Objective,ProofOfMastery,KeyConcepts),@SEARCH) AS FC ON FC.[Key]=C.ChecklistId
+	 LEFT JOIN FREETEXTTABLE(SDC_ChecklistCategories,CategoryName,@SEARCH) AS FCHKCAT ON FCHKCAT.[Key]=CHKINCAT.ChecklistCategoryId
+   WHERE c.ChecklistType='Diagram'
+   ORDER BY (ISNULL(FC.[Rank],0) +ISNULL(FCHKCAT.[Rank],0) + ISNULL(FCHKCAT.[Rank],0)) DESC
+END
+
+SELECT Id,PlaybookId,ChecklistId,(SELECT ChecklistTitle FROM SDC_Checklists WHERE ChecklistId=PlaybookId and ChecklistType='Playbook') AS PlayBook,
+ChecklistType,
+CheckListTitle,
+CASE WHEN CheckListDesc      LIKE '%'+@Search+'%' THEN CheckListDesc      ELSE NULL END AS CheckListDesc,
+CASE WHEN Objective          LIKE '%'+@Search+'%' THEN Objective          ELSE NULL END AS Objective,
+CASE WHEN ProofMastery       LIKE '%'+@Search+'%' THEN ProofMastery       ELSE NULL END AS ProofOfMastery,
+CASE WHEN KeyConcepts        LIKE '%'+@Search+'%' THEN KeyConcepts        ELSE NULL END AS KeyConcepts,
+CASE WHEN CategoryName       LIKE '%'+@Search+'%' THEN CategoryName       ELSE NULL END AS CategoryName,
+CASE WHEN Instructions       LIKE '%'+@Search+'%' THEN Instructions       ELSE NULL END AS Instructions,
+CASE WHEN BestPractice       LIKE '%'+@Search+'%' THEN BestPractice       ELSE NULL END AS BestPractice,
+CASE WHEN ChecklistTaskTitle LIKE '%'+@Search+'%' THEN ChecklistTaskTitle ELSE NULL END AS ChecklistTaskTitle,
+CASE WHEN SkillProof         LIKE '%'+@Search+'%' THEN SkillProof         ELSE NULL END AS SkillProof,
+CASE WHEN Tips               LIKE '%'+@Search+'%' THEN Tips               ELSE NULL END AS Tips,
+CASE WHEN Contents           LIKE '%'+@Search+'%' THEN Contents           ELSE NULL END AS Contents,
+CASE WHEN OrignalFileName    LIKE '%'+@Search+'%' THEN OrignalFileName     ELSE NULL END AS OriginalFileName,
+[Rank]
+FROM @Temp WHERE Rank>0  and PlaybookId is not null
+ORDER BY Rank DESC 
+OFFSET @PageSize * (@PageNo - 1) ROWS FETCH NEXT @PageSize ROWS ONLY
+
+END

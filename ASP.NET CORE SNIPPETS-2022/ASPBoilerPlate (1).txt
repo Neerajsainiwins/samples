@@ -1,0 +1,28 @@
+ASPBoilerPlate - 
+
+ [DependsOn(typeof(AbpAutoMapperModule))]
+    public class CommonModule:AbpModule
+    {
+        public override void PreInitialize()
+        {
+            Configuration.Modules.AbpAutoMapper().Configurators.Add(config =>
+            {
+                config.CreateMap<SYS_User, UserDetailDTO>()
+                    .ForMember(c => c.RoleIds, opt => opt.MapFrom(s => s.UsersInRoles.Select(d => d.RoleId).ToArray()));
+
+                config.CreateMap<SYS_User, UserDTO>()
+                    .ForMember(c => c.Role, opt => opt.MapFrom(s => string.Join(", ", s.UsersInRoles.Select(d => d.Role.RoleTitle))))
+                    .ForMember(c => c.RoleIds, opt => opt.MapFrom(s => s.UsersInRoles.Any() ? s.UsersInRoles.Select(d => d.RoleId).ToList() : new List<Guid>()));
+            });
+
+        }
+        public override void Initialize()
+        {
+            IocManager.Register(typeof(IAmbientScopeProvider<>), typeof(DriveDataContextAmbientScopeProvider<>), DependencyLifeStyle.Transient);
+            IocManager.RegisterAssemblyByConvention(typeof(CommonModule).GetAssembly());
+            IocManager.Register<IHttpContextAccessor, HttpContextAccessor>();
+        }
+        public override void PostInitialize()
+        {
+        }
+    }
