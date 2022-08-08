@@ -24,7 +24,7 @@
     "react-validation": "^3.0.7",
     "react-year": "0.0.1",
     "redux": "^4.0.1",
-    "validator": "^10.7.1"
+    "validator": "^13.7.0"
   },
   "scripts": {
     "start": "set PORT=7171 && react-scripts start",
