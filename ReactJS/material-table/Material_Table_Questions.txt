@@ -1,0 +1,115 @@
+import React, { createRef } from "react";
+import { useNavigate } from "react-router-dom";
+import WarningIcon from "@material-ui/icons/Warning";
+import Button from "@material-ui/core/Button";
+import Tooltip from "@material-ui/core/Tooltip";
+
+import { API_URLS } from "../../../config/ApiUrls";
+import routePaths from "../../../config/RoutePaths";
+import { UseTable } from "../../../hooks/useTable";
+import { IQuestionTableProps } from "../../../models/Interfaces/IQuestion";
+import API from "../../../services/Api.Service";
+import "./Style.css";
+
+const tableRef = createRef<any>();
+const QuestionTable = ({ setLoading }: IQuestionTableProps) => {
+  const navigate = useNavigate();
+
+  const edit = (questionId: string) => {
+    navigate(`${routePaths.CREATEQUESTION}?questionId=${questionId}`);
+  };
+  const navigateToManageLanguage = (questionId: string) => {
+    navigate(`${routePaths.MANAGELANGUAGE}?questionId=${questionId}`);
+  };
+  const archivedQuestions = (questionId: string) => {
+    setLoading(true);
+    API.post(API_URLS.ArchivedQuestions, null, {
+      params: {
+        QuestionId: questionId,
+      },
+    })
+      .then(() => {
+        tableRef?.current?.onQueryChange();
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  const columns = [
+    {
+      title: "Question Text",
+      field: "questionText",
+      render: (rowData: any) => (
+        <div>
+          {rowData.questionText}{" "}
+          {!rowData.hasAudio && (
+            <Tooltip
+              title={
+                <>
+                  <h3>SETUP INCOMPLETE</h3>
+                  <p>This audio is missing</p>
+                </>
+              }
+              arrow
+            >
+              <Button className="warning-icon">
+                <WarningIcon />
+              </Button>
+            </Tooltip>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "MANAGE",
+      field: "Edit",
+      render: (rowData: any) => (
+        <div className="actions-container">
+          <p onClick={() => edit(rowData?.questionId)}>Edit</p>
+          <span>|</span>
+          <p onClick={() => navigateToManageLanguage(rowData?.questionId)}>
+            Language
+          </p>
+          <span>|</span>
+          <p onClick={() => archivedQuestions(rowData?.questionId)}>Archive</p>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="question-table">
+      <UseTable
+        refTable={tableRef}
+        columns={columns}
+        data={(query: any) =>
+          new Promise((resolve) => {
+            let orderby = "QuestionId";
+            if (query?.orderBy?.field && query?.orderDirection) {
+              orderby = `${query?.orderBy?.field} ${query?.orderDirection}`;
+            }
+            API.get(API_URLS.GetQuestionsList, {
+              params: {
+                PageNumber: (query?.page ?? 0) + 1,
+                PageSize: query?.pageSize,
+                OrderBy: orderby,
+                SearchValue: query?.search,
+              },
+            }).then((response: any) => {
+              resolve({
+                data: response.data.data,
+                page: query.page,
+                totalCount: JSON.parse(response.headers["x-pagination"])
+                  ?.TotalCount,
+              });
+            });
+          })
+        }
+        title="Questions"
+      />
+    </div>
+  );
+};
+
+export default QuestionTable;
