@@ -1,0 +1,63 @@
+
+ALTER PROCEDURE [dbo].[sp_GetMenuDetails] @userid AS int, @companyid AS int
+AS
+BEGIN
+
+    WITH UserScreens(ScreenId, 
+                     ScreenName, 
+                     ParentId, 
+                     ScreenPageName, 
+                     Menu)
+         AS (SELECT DISTINCT 
+                    M.ScreenId, 
+                    S.ScreenName, 
+                    S.ParentId, 
+                    S.ScreenPageName, 
+                    S.Menu
+               FROM UserRoles AS UR
+               INNER JOIN Roles AS R ON UR.RoleId = R.RoleId
+                                        AND R.RecordDeleted = 'N'
+               INNER JOIN RolePermissions AS RP ON R.RoleId = RP.RoleId
+                                                   AND RP.RecordDeleted = 'N'
+                                                   AND (RP.ReadPermission = 1
+                                                        OR RP.WritePermission = 1
+                                                       )
+               INNER JOIN Screens AS S ON RP.ScreenId = S.ScreenId
+               INNER JOIN UserMenu AS M ON M.ScreenId = S.ScreenId
+                                           AND S.RecordDeleted = 'N'
+                                           AND S.Active = 'Y'
+                                           AND S.Menu = 'Y'
+              WHERE UR.CompanyId = @companyid
+                    AND UR.UserId = @userid
+                    AND UR.RecordDeleted = 'N'
+                    AND S.ScreenPageName IS NOT NULL)
+         SELECT *
+           FROM UserScreens
+         UNION
+         SELECT S.ScreenId, 
+                S.ScreenName, 
+                S.ParentId, 
+                S.ScreenPageName, 
+                S.Menu
+           FROM Screens AS S
+          WHERE ScreenId < 0
+         UNION
+         SELECT S.ScreenId, 
+                S.ScreenName, 
+                S.ParentId, 
+                S.ScreenPageName, 
+                S.Menu
+           FROM Screens AS S
+          WHERE S.ScreenPageName IS NULL
+                AND S.Active = 'Y'
+                AND S.RecordDeleted = 'N'
+                AND EXISTS
+                          (
+                           SELECT *
+                             FROM UserScreens
+                            WHERE ParentId = S.ScreenId
+                                  AND Active = 'Y'
+                                  AND RecordDeleted = 'N'
+                          )
+         ORDER BY ScreenId;
+END;
