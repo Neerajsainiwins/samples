@@ -1,0 +1,57 @@
+
+CREATE OR ALTER FUNCTION [dbo].[fn_getDiagnosisCodeByDate] 
+(
+	 @ClientID INT
+	,@StartDate DATETIME
+	,@DiagnosisType VARCHAR(10)
+	,@ProgramCode VARCHAR(50)
+)
+RETURNS VARCHAR(100)
+AS
+BEGIN
+	DECLARE @DXCode VARCHAR(50) = ''	
+
+	IF @ProgramCode = 'SUD'
+		BEGIN
+			SELECT @DXCode = DxCode 
+			FROM (SELECT SD.DxCode,
+						RN = ROW_NUMBER() Over (Order By UDO.UDCode)
+				FROM UD_DSM5Diagnosis DD
+				INNER JOIN s_Diagnosis SD ON SD.DXID = DD.[Code]
+				INNER JOIN s_DiagnosisCategory SDC ON SD.DiagnosisCategoryID = SDC.DiagnosisCategoryID
+				INNER JOIN s_UserDefinedOptions UDO ON UDO.UDID = DD.[Type]			
+				WHERE ClientID = @ClientID
+					AND DD.DiagnosisDate <=  @StartDate 
+					AND (
+						DD.ExpirationDate <= @StartDate 
+						OR DD.ExpirationDate IS NULL
+						)
+					AND SDC.DiagnosisCategory IN ('Substance Use')		
+			)Temp WHERE Temp.RN = @DiagnosisType			
+		END	
+	ELSE
+		BEGIN
+			SELECT @DXCode = DxCode 
+			FROM (SELECT SD.DxCode,
+						RN = ROW_NUMBER() Over (Order By UDO.UDCode)
+				FROM UD_DSM5Diagnosis DD
+				INNER JOIN s_Diagnosis SD ON SD.DXID = DD.[Code]
+				INNER JOIN s_DiagnosisCategory SDC ON SD.DiagnosisCategoryID = SDC.DiagnosisCategoryID
+				INNER JOIN s_UserDefinedOptions UDO ON UDO.UDID = DD.[Type]			
+				WHERE ClientID = @ClientID
+					AND DD.DiagnosisDate <=  @StartDate 
+					AND (
+						DD.ExpirationDate <= @StartDate 
+						OR DD.ExpirationDate IS NULL
+						)
+					AND SDC.DiagnosisCategory IN ('Mental Health','Intellectual/Developmental Disability')		
+			)Temp WHERE Temp.RN = @DiagnosisType			
+		END
+
+	IF @DXCode = ''
+		BEGIN
+			SET @DXCode = '999.9997'
+		END
+
+	RETURN @DXCode
+END

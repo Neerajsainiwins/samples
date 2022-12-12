@@ -1,0 +1,15 @@
+SELECT        c_Client.ClientID, c_Client.SocialSecurityNumber, c_Client.BirthDate, c_Client.Gender, c_Client.ImageName, c_Client.RelationshipID, c_Client.RaceID, c_Client.RecordAccess, c_Client.CreatedOn, 
+                         c_Client.LastModifiedOn, c_Client.LastModifiedBy, c_Client.Ethnicity, c_Client.RecordStatus, c_Client.ZipCode, c_Client.HomePhone, c_Client.WorkPhone, c_Client.MobilePhone, c_Client.FirstName, 
+                         c_Client.MiddleInitial, c_Client.LastName, c_Client.Alias, c_Client.Comments, c_Client.Address1, c_Client.Address2, ZipCode.City, ZipCode.County, ZipCode.State, ZipCode.Township, c_Client.PreferredLanguage, 
+                         Ethnicity.UDDescription AS Ethnicity_, Language.UDDescription AS PreferredLanguage_, Race.UDDescription AS Race_, ZipCode.ZipCode AS ZipCode_, Gender.UDDescription AS Gender_, c_Client.Age, 
+                         c_Client.PreferredCommunication, Communication.UDDescription AS PreferredCommunication_, c_Client.EmailAddress, c_Client.SuffixID, Suffix.UDDescription AS Suffix_, c_Client.AllowOnlineAccess, 
+                         c_Client.LastName + ' , ' + c_Client.FirstName AS Client, c_Client.CompanyID, c_Client.MedicaidID, c_Client.ForwardHealthID, dbo.s_Company.Companyname, c_Client.OrganizationNo
+FROM            dbo.c_Client AS c_Client LEFT OUTER JOIN
+                         dbo.s_UserDefinedOptions AS Race ON Race.UDID = c_Client.RaceID LEFT OUTER JOIN
+                         dbo.s_UserDefinedOptions AS Language ON Language.UDID = c_Client.PreferredLanguage LEFT OUTER JOIN
+                         dbo.s_UserDefinedOptions AS Ethnicity ON Ethnicity.UDID = c_Client.Ethnicity LEFT OUTER JOIN
+                         dbo.s_UserDefinedOptions AS Gender ON Gender.UDID = c_Client.Gender LEFT OUTER JOIN
+                         dbo.s_UserDefinedOptions AS Communication ON Communication.UDID = c_Client.PreferredCommunication LEFT OUTER JOIN
+                         dbo.s_ZipCodes AS ZipCode ON ZipCode.ZipID = c_Client.ZipCode LEFT OUTER JOIN
+                         dbo.s_UserDefinedOptions AS Suffix ON Suffix.UDID = c_Client.SuffixID LEFT OUTER JOIN
+                         dbo.s_Company ON dbo.s_Company.CompanyID = c_Client.CompanyID
