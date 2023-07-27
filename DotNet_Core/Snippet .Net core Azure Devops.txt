@@ -1,0 +1,175 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace DL.Deals.API.Deals.Controllers
+{
+    [Route("api/v{version:apiVersion}")]
+    [ApiVersion("1.0")]
+    public class MainController : BaseController
+    {
+        #region Main
+
+        /// <summary>
+        /// Gets the details for a main pages.
+        /// </summary>
+        /// <param name="id">ID of main pages to get.</param>
+        [HttpGet("{id}")]
+        [Authorize(AuthPolicies.TokenOrApiKey)]
+        public async Task<ActionResult<MainDto>> GetMain(int dealId)
+        {
+            var retval = await Mediator.Send(new GetMainQuery(dealId));
+            if (retval is null)
+            {
+                return NotFound();
+            }
+            return Ok(retval);
+        }
+     }
+}
+
+
+
+
+
+using MediatR;
+
+namespace DL.Main.API.Application
+{
+    public readonly record struct GetMainQuery(int Id) : IRequest<MainDto>;
+}
+
+
+
+
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
+using MediatR;
+
+namespace DL.Main.API.Application
+{
+    public class GetMainQueryHandler : IRequestHandler<GetMainQuery, MainDto?>
+    {
+        private readonly IMainsUnitOfWork _data;
+        private readonly IMediator _mediator;
+        private readonly IMapper _mapper;
+
+        public GetMainQueryHandler(IMainsUnitOfWork data, IMediator mediator, IMapper mapper)
+        {
+            _data = data;
+            _mediator = mediator;
+            _mapper = mapper;
+        }
+
+        public async Task<MainDto?> Handle(GetMainQuery request, CancellationToken cancellationToken)
+        {
+            var mainval = await _data.Mains.GetFullMain(request.Id, cancellationToken);
+
+            if (mainval is null)
+            {
+                return null;
+            }
+
+            var dto = _mapper.Map<MainDto>(mainval);
+            dto.StepsInfo = _mapper.Map<MainStepsDto>(mainval.Steps);
+            dto.ContentInfo = await _mediator.Send(
+                new GetMainCOntentsQuery(mainval),
+                cancellationToken) ?? new MainContentsDto();
+            dto.Diagram = await _mediator.Send(
+                new GetMainDiagramQuery(mainval),
+                cancellationToken) ?? new MainDiagramDto();
+
+            if (mainval?.Tags is not null)
+            {
+                // only lock diagrams if main is disabled
+                dto.IsDiagramLocked = mainval.Diagram.Any(p => p.IsDisabled)
+                    || mainval.Tags.Any(d => d.Value == "Completed");
+
+                // lock content if main is disabled
+                dto.IsContentLocked = mainval.Content.Any(p => p.IsDisabled)
+                    || mainval.Tags.Any(d => d.Value == "Completed");
+            }
+            if (mainval?.Digram is not null)
+            {
+                dto.SetSignature(mainval.Digram.FirstOrDefault(d => !string.IsNullOrEmpty(d.PrimaryCustomerSignature))?.PrimaryCustomerSignature,
+                mainval.Digram.FirstOrDefault(d => !string.IsNullOrEmpty(d.SecondaryCustomerSignature))?.SecondaryCustomerSignature);
+            }
+
+            return dto;
+        }
+    }
+}
+
+
+
+using ProtoBuf;
+
+namespace Main.Domain.Common.Dtos
+{
+    [Serializable]
+    [ProtoContract]
+    public record MainDto
+    {
+        /// <summary>
+        /// Id of main.
+        /// </summary>
+        [ProtoMember(1)]
+        public int Id { get; init; }
+
+        [ProtoMember(2)]
+        public DateTime? CreateDateTimeUtc { get; init; }
+
+        [ProtoMember(3)]
+        public DateTime? LastUpdateDateTimeUtc { get; init; }       
+
+        [ProtoMember(4)]
+        public bool IsContentLocked { get; set; } = false;
+
+        [ProtoMember(5)]
+        public bool IsDigramLocked { get; set; } = false;
+
+        /// <summary>
+        /// Content information for main
+        /// </summary>
+        [ProtoMember(6)]
+        public MainContentDto? ContentInfo { get; set; }
+
+        /// <summary>
+        /// Digram on main.
+        /// </summary>
+        [ProtoMember(7)]
+        public MainDigramDto DigramInfo { get; init; } = new();
+
+        /// <summary>
+        /// Steps information on deal.
+        /// </summary>
+        [ProtoMember(8)]
+        public MainStepsDto StepInfo { get; set; } = new();        
+
+        /// <summary>
+        /// Signature of Primary Customer.
+        /// </summary>
+        [ProtoMember(9)]
+        public string? PrimaryCustomerSignature { get; private set; }
+
+        /// <summary>
+        /// Signature of Secondary Customer.
+        /// </summary>
+        [ProtoMember(10)]
+        public string? SecondaryCustomerSignature { get; private set; }
+
+        public void SetSignature(string? primaryCustomerSignature, string? secondaryCustomerSignature)
+        {
+            PrimaryCustomerSignature = primaryCustomerSignature;
+            SecondaryCustomerSignature = secondaryCustomerSignature;
+        }
+    }
+}
+
+
