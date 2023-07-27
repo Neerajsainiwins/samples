@@ -1,0 +1,681 @@
+var _meetingid = -1;
+var weekday = '';
+var startDate = '';
+var day = -1;
+function EditMeeting(sender, eventArgs) {
+    Clear();
+
+    if (!validateAllDayEvent(eventArgs._appointment._id)) return;
+    hideshowCalenderModeOption();
+    GetMeeting(eventArgs._appointment._id);
+    $('[name$="DeleteButton"]').css('display', 'inline-block');
+}
+
+function AddMeeting() {
+    Clear();
+    $('[name$="DropDownClientEnrollment"]').parent().show();
+    $('[name$="DropDownListClientId"] option').each(function () {
+        if ($(this).val() != '' && $(this).val() != _SelectedClient) {
+            $(this).remove();
+        }
+    });
+
+    hideshowCalenderModeOption();
+
+
+    $('[name$="ForceSave"]').val('false');
+
+    $('#DivMeeting').modal('show');
+    $('[name$="DeleteButton"]').css('display', 'none');
+    $('#btnViewAuditDetails').hide();
+    $('#btnPrintMeeting').hide();
+}
+function hideshowCalenderModeOption() {
+    if ($("[name$='DropDownListCalendarMode'] option:selected").text() == "Client") {
+        $("[name$='DropDownClientEnrollment'] option[value='-2']").addClass("hidden");
+        $("[name$='DropDownClientEnrollment'] option[value='-2']").prop("disabled", true);
+    }
+    else if ($("[name$='DropDownListCalendarMode'] option:selected").text() == "Company") {
+        $("[name$='DropDownClientEnrollment'] option[value='-2']").removeClass("hidden");
+        $("[name$='DropDownClientEnrollment'] option[value='-2']").prop("disabled", false);
+    }
+}
+function ExportToPdf() {
+    $('#DivExport').modal('show');
+}
+
+function ClientTimeSlotClick(sender, eventArgs) {
+    $elem = sender._currentHoverCell.offsetParent;
+    if ($($elem).hasClass("rsAllDayTable")) {
+        showErrorMessage("You can not modify a holiday.")
+        return false;
+    }
+
+    AddMeeting();
+    $('.tr-months-recurrence').css('display', 'none');
+    var selectedDateTime = eventArgs.get_time();
+    var selectedDate = (selectedDateTime.getMonth() + 1) + '/' + selectedDateTime.getDate() + '/' + selectedDateTime.getFullYear();
+
+    if ($('[name$="hfCalenderMode"]').val() == 'Month') {
+        $('[name$="TextBoxMeetingStartDate"]').val(selectedDate);
+        $('[name$="TextBoxMeetingEndDate"]').val(selectedDate);
+    }
+    else {
+        $('[name$="TextBoxMeetingStartDate"]').val(selectedDate);
+        $('[name$="TextBoxMeetingStartTime"]').timepicker('setTime', selectedDateTime);
+
+        $('[name$="TextBoxMeetingEndDate"]').val(selectedDate);
+        $('[name$="TextBoxMeetingEndTime"]').timepicker('setTime', new Date(selectedDateTime.setHours(selectedDateTime.getHours() + 1)));
+    }
+}
+
+function Clear() {
+    $('[name$="MeetingId"]').val('-1');
+    $('[name$="MasterReference"]').val('-1');
+    $('[name$="ListBoxCalenders"]').val('');
+    $('[name$="DropDownLocations"]').val('');
+    $('[name$="DropDownMeetingTypes"]').val('');
+    $('[name$="TextBoxTitle"]').val('');
+    $('[name$="TextBoxMeetingStartDate"]').val('');
+    $('[name$="TextBoxMeetingStartTime"]').val('');
+    $('[name$="TextBoxMeetingEndTime"]').val('');
+    $('[name$="TextBoxMeetingEndDate"]').val('');
+    $('[name$="DropDownListClientId"]').val('');
+    $('[name$="DropDownListColor"]').val('');
+    $('[name$="hfClientProgramEnrollmentId"]').val('-1');
+    $('[name$="hfClientId"]').val('-1');
+    $('[id$="selectedClientEnrollment"]').text('');
+    $('[name$="hfSelectedClientEnrollment"]').text('');
+    $('[name$="hfDifferentClient"]').val('false');
+    $('[name$="DropDownClientEnrollment"]').val('-3');
+    $('[name$="TextBoxComments"]').val('');
+    $('[name$="TextBoxTravelNotes"]').val('');
+    $('[name$="ForceSave"]').val('false');
+
+    $('[name$="CheckBoxRecurrence"]').prop('checked', false);
+    $('[name$="TextBoxRecurrenceEndDate"]').val('');
+    $('[name$="DropDownListRepeat"]').val('');
+    $('[name$="DropDownListFrequency"]').val('1');
+
+    $('[name$="CheckBox_Sunday"]').prop('checked', false);
+    $('[name$="CheckBox_Monday"]').prop('checked', false);
+    $('[name$="CheckBox_Tuesday"]').prop('checked', false);
+    $('[name$="CheckBox_Wednesday"]').prop('checked', false);
+    $('[name$="CheckBox_Thursday"]').prop('checked', false);
+    $('[name$="CheckBox_Friday"]').prop('checked', false);
+    $('[name$="CheckBox_Saturday"]').prop('checked', false);
+
+
+    $('.tr-is-reccurrence').css('display', 'table-row');
+    $('.tr-reccurrence-end,.tr-repeat,.tr-frequency,.tr-reccurrence-update-option').css('display', 'none');
+
+}
+
+function ClearFilters(elem) {
+    $('[name$="' + elem + '"]').prop('selectedIndex', -1);
+    if (elem.indexOf('TextBoxFilter') >= 0) {
+        $('[name$="' + elem + '"]').val('');
+    }
+
+}
+
+function GetMeeting(id) {
+
+    _meetingid = id;
+    $.get('/Ajax/AjaxServer.aspx?Page=Meetings&Action=Get&MeetingId=' + id + '&stamp=' + $.now(), DoneGet, 'json');
+}
+
+function DoneGet(json) {
+    $('.tr-is-reccurrence,.tr-reccurrence-end,.tr-repeat,.tr-frequency,.tr-reccurrence-update-option').css('display', 'none');
+    $('[name$="MeetingId"]').val(json[0].MeetingId);
+    $('[name$="MasterReference"]').val(json[0].MasterReference);
+    $('.tr-reccurrence-update-option').css('display', json[0].MasterReference != null && json[0].MasterReference != '' ? 'table-row' : 'none');
+    $('[name$="DropDownListReccurringUpdateOption"]').prop('selectedIndex', 0);
+    $('[name$="ListBoxCalenders"]').val(json[0].CalendarId);
+    $('[name$="DropDownLocations"]').val(json[0].MeetingLocation);
+    $('[name$="DropDownMeetingTypes"]').val(json[0].MeetingType);
+
+    $('[name$="TextBoxTitle"]').val(json[0].Title);
+
+    var start = new Date(json[0].StartTime);
+    $('[name$="TextBoxMeetingStartDate"]').val((start.getMonth() + 1) + '/' + start.getDate() + '/' + start.getFullYear());
+    $('[name$="TextBoxMeetingStartTime"]').val(setTime(start.getHours(), start.getMinutes()));
+
+    var end = new Date(json[0].EndTime);
+    $('[name$="TextBoxMeetingEndDate"]').val((end.getMonth() + 1) + '/' + end.getDate() + '/' + end.getFullYear());
+    $('[name$="TextBoxMeetingEndTime"]').val(setTime(end.getHours(), end.getMinutes()));
+
+    if ($('[name$="DropDownListClientId"] [value=' + json[0].ClientId + ']').length == 0 && json[0].ClientId != -1) {
+        $('[name$="DropDownListClientId"]').append($('<option>', { value: json[0].ClientId })
+            .text(json[0].ClientName));
+    }
+
+    var _SelectedClient = SelectedClient;
+    if (json[0].ClientId == null) {
+        if (_SelectedClient != '') {
+            $('[name$="DropDownClientEnrollment"]').val('-3');
+        }
+        $('[name$="DropDownClientEnrollment"]').parent().show();
+        $("[id$='selectedClientEnrollment']").text('');
+        $("[name$='hfSelectedClientEnrollment']").val('');
+    }
+    else if (_SelectedClient != json[0].ClientId) {
+        $('[name$="DropDownClientEnrollment"]').val('-3');
+        $("[id$='selectedClientEnrollment']").text(json[0].ClientProgramDesc);
+        $("[name$='hfSelectedClientEnrollment']").val(json[0].ClientProgramDesc);
+        $('[name$="DropDownClientEnrollment"]').parent().hide();
+        $('[name$="hfDifferentClient"]').val(true);
+        $('[name$="hfClientProgramEnrollmentId"]').val(json[0].ClientProgramEnrollmentId);
+        $('[name$="hfClientId"]').val(json[0].ClientId);
+
+    }
+    else {
+        $('[name$="DropDownClientEnrollment"]').parent().show();
+        $("[id$='selectedClientEnrollment']").text('');
+        $("[name$='hfSelectedClientEnrollment']").val('');
+        $('[name$="hfDifferentClient"]').val(false);
+        var enrolledProgramId = json[0].ClientProgramEnrollmentId;
+        $('[name$="DropDownClientEnrollment"] option').each(function () {
+
+            $(this).removeAttr('selected');
+            if (enrolledProgramId != null) {
+                if ($(this).val() == enrolledProgramId) {
+                    $(this).attr('selected', 'selected');
+                    $('[name$="DropDownClientEnrollment"]').val(enrolledProgramId);
+                }
+            }
+            else {
+                if ($(this).val() == '-1') {
+                    $(this).attr('selected', 'selected');
+                    $('[name$="DropDownClientEnrollment"]').val('-1');
+                }
+            }
+        });
+    }
+
+    $('[name$="DropDownListColor"]').val(json[0].Color);
+    $('[name$="TextBoxComments"]').val(json[0].Comments);
+    $('[name$="TextBoxTravelNotes"]').val(json[0].TravelNotes);
+    if (end < new Date()) {
+        $('#DeleteButton').hide();
+    }
+    else {
+        $('#DeleteButton').show();
+    }
+    $('#btnViewAuditDetails').show();
+    $('#btnPrintMeeting').show();
+    $('#DivMeeting').modal('show');
+
+}
+
+function ViewAuditDetails() {
+    ViewDetail(this, 'Calendar Meetings', 'CalendarMeetings', $('#MeetingId').val(), 0, '');
+}
+
+function ViewPrintDetails() {
+    ViewDetail(this, 'Calendar Meetings', 'CalendarMeetings', $('#MeetingId').val(), 0, '');
+    window.open("../PopUps/AuditLogDetails.aspx?DBObject=" + DBObject + "&Key=" + Key + "&Heading=" + Heading, "_blank", "directories=no,height=600,width=800,location=no,menubar=no,resizable=yes," +
+        "scrollbars=yes,status=no,toolbar=no,top=" + top + ",left=" + left);
+}
+
+
+function DoneSave(json) {
+    window.location.href = 'Meetings.aspx';
+}
+
+var _widgetFullscreenState = false;
+
+function InitFullScreenWidget() {
+    $('#widget-grid').jarvisWidgets({
+
+        grid: 'article',
+        widgets: '.jarviswidget',
+        deleteSettingsKey: '#deletesettingskey-options',
+        settingsKeyLabel: 'Reset settings?',
+        deletePositionKey: '#deletepositionkey-options',
+        positionKeyLabel: 'Reset position?',
+        buttonsHidden: false,
+        toggleButton: true,
+        toggleClass: 'fa fa-minus | fa fa-plus',
+        toggleSpeed: 200,
+        onToggle: function () {
+        },
+        deleteButton: true,
+        deleteMsg: 'Warning: This action cannot be undone!',
+        deleteClass: 'fa fa-times',
+        deleteSpeed: 200,
+        onDelete: function () { },
+        editButton: true,
+        editPlaceholder: '.jarviswidget-editbox',
+        editClass: 'fa fa-cog | fa fa-save',
+        editSpeed: 200,
+        onEdit: function () { },
+        colorButton: true,
+        fullscreenButton: true,
+        fullscreenClass: 'fa fa-expand | fa fa-compress',
+        fullscreenDiff: 3,
+        onFullscreen: function (obj) {
+            $(".rsTopWrap").width("100%");
+            $(".rsTopWrap").height("auto");
+            _widgetFullscreenState = !_widgetFullscreenState;
+            if (_widgetFullscreenState) {
+                $('#widget-grid').css('position', 'fixed');
+                $('#widget-grid').zIndex(10000);
+            } else {
+                $('#widget-grid').css('position', '');
+                $('#widget-grid').zIndex(0);
+            }
+        },
+        customButton: false,
+        customClass: 'folder-10 | next-10',
+        customStart: function () {
+            alert('Hello you, this is a custom button...');
+        },
+        customEnd: function () {
+            alert('bye, till next time...');
+        },
+        buttonOrder: '%refresh% %custom% %edit% %toggle% %fullscreen% %delete%',
+        opacity: 1.0,
+        dragHandle: '> header',
+        placeholderClass: 'jarviswidget-placeholder',
+        indicator: true,
+        indicatorTime: 600,
+        ajax: false,
+        timestampPlaceholder: '.jarviswidget-timestamp',
+        timestampFormat: 'Last update: %m%/%d%/%y% %h%:%i%:%s%',
+        refreshButton: true,
+        refreshButtonClass: 'fa fa-refresh',
+        labelError: 'Sorry but there was a error:',
+        labelUpdated: 'Last Update:',
+        labelRefresh: 'Refresh',
+        labelDelete: 'Delete widget:',
+        afterLoad: function () { },
+        rtl: false,
+        onChange: function () {
+
+        },
+        onSave: function () {
+
+        },
+        ajaxnav: $.navAsAj
+
+    });
+}
+
+function SelectClientEnrollment() {
+    var top = (screen.availHeight - 500) / 2;
+    var left = (screen.availWidth - 800) / 2;
+    var nWindow = window.open("../PopUps/ClientSearch_SimpleWithEnrollments.aspx?ClientEnabled=True", "ClientSearch", "toolbar=no,height=500,width=800,scrollbars=yes,top=" + top + ",left=" + left);
+    DisableBackGround();
+    nWindow.focus();
+}
+
+function CancelClient() {
+    $('[name$="hfClientProgramEnrollmentId"]').val('-1');
+    $('[name$="hfClientId"]').val('-1');
+}
+
+function AddClientToList(ClientId, ClientName, ClientEnrollmentId, ProgramText, NewFlag, ClientName) {
+    $('[name$="hfClientProgramEnrollmentId"]').val(ClientEnrollmentId);
+    $('[name$="hfClientId"]').val(ClientId);
+    $('[id$="selectedClientEnrollment"]').text(ClientName + '/' + ProgramText);
+    $('[name$="hfSelectedClientEnrollment"]').val(ClientName + '/' + ProgramText);
+    
+}
+
+function SelectClient(ClientId, ClientName) {
+    $('[name$="hfClientId"]').val(ClientId);
+    $('[name$="hfClientProgramEnrollmentId"]').val('-1');
+    $("[id$='selectedClientEnrollment']").text(ClientName);
+    $('[name$="hfSelectedClientEnrollment"]').val(ClientName);
+}
+function SchedulerPopulating(sender, eventArgs) {
+    var info = eventArgs.get_schedulerInfo();
+    info.Calendar = "Test";
+}
+function GetDayAndDate() {
+    weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    startDate = $('[name$="TextBoxMeetingStartDate"]').val() != "" ? new Date($('[name$="TextBoxMeetingStartDate"]').val()) : new Date();
+    day = startDate.getDate();
+    $('[id$="lblMonthly"]').text('Monthly on day ' + day);
+    $("[name$='labelMonthly']").val('Monthly on day ' + day);
+    $('[id$="lblWeekly"]').text('Monthly on the following ' + weekday[startDate.getDay()] + '(s)');
+    $("[name$='labelWeekly']").val('Monthly on the following ' + weekday[startDate.getDay()] + '(s)');
+}
+function frequencyChanged(elem) {
+    if ($(elem).val() == 'Weekly') {
+        $('.tr-frequency').css('display', 'table-row');
+        $('.tr-months-recurrence').css('display', 'none');
+        $('.tr-days-recurrence').css('display', 'none');
+    }
+    else if ($(elem).val() == 'Daily') {
+        $('.tr-days-recurrence').css('display', 'table-row');
+        $('.tr-frequency').css('display', 'none');
+        $('.tr-months-recurrence').css('display', 'none');
+    }
+    else if ($(elem).val() == 'Monthly') {
+        GetDayAndDate();
+        $("[id$='radioMonthly']").attr("checked", true);
+        $('.tr-days-recurrence').css('display', 'none');
+        $('.tr-months-recurrence').css('display', 'table-row');
+        $('.tr-frequency').css('display', 'none');
+    }
+    else {
+        $('.tr-frequency').css('display', 'none');
+        $('.tr-days-recurrence').css('display', 'none');
+        $('.tr-months-recurrence').css('display', 'none');
+        $('[name$="DropDownListFrequency"]').val('');
+    }
+}
+function toggleCheckboxValues() {
+    if ($('input:radio[name$=MonthlyRadioButton]:checked').val() == "XDayOfWeek") {
+
+        if ($('[name$="TextBoxMeetingStartDate"]').val() != '')
+            CheckDefaultCheckBox();
+        $('.checkBoxSelection').removeAttr("disabled");
+
+    }
+    else {
+        $('.checkBoxSelection').attr("disabled", "disabled");
+        ClearCheckbox();
+
+    }
+
+}
+
+function ClearCheckbox() {
+
+    $("[id$='CheckBox_First']").prop('checked', false);
+    $("[id$='CheckBox_Second']").prop('checked', false);
+    $("[id$='CheckBox_Third']").prop('checked', false);
+    $("[id$='CheckBox_Fourth']").prop('checked', false);
+
+}
+
+function CheckDefaultCheckBox() {
+    var startDate = new Date($('[name$="TextBoxMeetingStartDate"]').val());
+    var day;
+    day = startDate.getDate();
+    ClearCheckbox()
+    switch (Math.floor((day - 1) / 7 + 1)) {
+        case 1:
+            $("[id$='CheckBox_First']").prop('checked', true);
+            break;
+
+        case 2:
+            $("[id$='CheckBox_Second']").prop('checked', true);
+            break;
+        case 3:
+            $("[id$='CheckBox_Third']").prop('checked', true);
+            break;
+        case 4:
+            $("[id$='CheckBox_Fourth']").prop('checked', true);
+            break;
+    }
+
+}
+
+function onReccurrenceChecked(elem) {
+    if ($(elem).prop('checked')) {
+        $('.tr-reccurrence-end,.tr-repeat').css('display', 'table-row');
+    } else {
+        $('.tr-reccurrence-end,.tr-repeat').css('display', 'none');
+    }
+}
+
+$('[name$="CheckBoxRecurrence"]').change(function () {
+    if (!this.checked) {
+
+        // reccurrence fields
+        $('[name$="CheckBoxRecurrence"]').prop('checked', false);
+        $('[name$="TextBoxRecurrenceEndDate"]').val('');
+        $('[name$="DropDownListRepeat"]').val('');
+        $('[name$="DropDownListFrequency"]').val('');
+        $('.tr-frequency').css('display', 'none');
+
+        // recurrence days of week
+        $('.tr-days-recurrence').css('display', 'none');
+        $('[name$="CheckBox_Sunday"]').prop('checked', false);
+        $('[name$="CheckBox_Monday"]').prop('checked', false);
+        $('[name$="CheckBox_Tuesday"]').prop('checked', false);
+        $('[name$="CheckBox_Wednesday"]').prop('checked', false);
+        $('[name$="CheckBox_Thursday"]').prop('checked', false);
+        $('[name$="CheckBox_Friday"]').prop('checked', false);
+        $('[name$="CheckBox_Saturday"]').prop('checked', false);
+
+
+    }
+});
+
+$(function () {
+    $('#DivMeeting').on('shown.bs.modal', function () {
+        $('.modal-backdrop').css('z-index', '5000');
+    })
+});
+
+function PopUpDifferentClient(obj) {
+    if ($(obj).val() == -2) {
+        SelectClientEnrollment();
+    }
+    else {
+        $("[id$='selectedClientEnrollment']").text('');
+        $("[name$='hfSelectedClientEnrollment']").val('');
+        $('[name$="hfClientProgramEnrollmentId"]').val('-1');
+        $('[name$="hfClientId"]').val('-1');
+    }
+}
+
+function setTime(hour, minutes) {
+
+    var timeFormat;
+    if (_FullDateFormat == 'N') {
+        if (hour >= 12) {
+            hour = (hour > 12 ? parseInt(hour) - 12 : 12);
+            timeFormat = 'PM';
+        }
+        else {
+            timeFormat = 'AM';
+        }
+
+        return (hour == 0 ? "12" : (hour < 10 ? "0" + hour : hour)) + ':' + (minutes < 10 ? "0" + minutes : minutes) + ' ' + timeFormat;
+    }
+    else {
+
+        return (hour == 0 ? "12" : (hour < 10 ? "0" + hour : hour)) + ':' + (minutes < 10 ? "0" + minutes : minutes);
+    }
+}
+
+function CalendarOption(obj) {
+    if ($(obj).find('option:selected').text() == 'Select multiple...') {
+        $(obj).attr('multiple', 'multiple');
+        $(obj).css('height', 70);
+        $(obj).find('option:eq(0)').remove();
+        $(obj).find('option:eq(0)').remove();
+        $(obj).addClass('custom-scroll');
+    }
+    return false;
+
+}
+function PrintCalendarMeeting(url) {
+    var top = (screen.availHeight - 600) / 2;
+    var left = (screen.availWidth - 800) / 2;
+    window.open(url, "_blank", "directories=no,height=600,width=800,location=no,menubar=no,resizable=yes," +
+        "scrollbars=yes,status=no,toolbar=no,top=" + top + ",left=" + left);
+}
+function viewprint(Reportserver, suserid) {
+    var url = "" + Reportserver + "?/Built-in/Calendar%20Meeting&rs:Format=PDF" +
+        "&rs:Command=Render&rc:Parameters=false&MeetingId=" + _meetingid + "&Token=" + suserid + ""
+    PrintCalendarMeeting(url);
+
+}
+function validateAllDayEvent(id) {
+    if (id=="-1") {
+        showErrorMessage("You can not modify a holiday.")
+        return false;
+    }
+    return true;
+}
+
+function EditGridData() {
+    Clear();
+    $('#DivHolidays').modal('hide');
+    var xml = $("#" + gridDivElement).text(),
+        xmlDoc = $.parseXML(xml),
+        $xml = $(xmlDoc),
+        xmlReccurrence = $("[id$='calendarMeetingReccurrence']").text(),
+        xmlDocRecurrence = $.parseXML(xmlReccurrence),
+        $xmlReccurrence = $(xmlDocRecurrence);
+    if (!isEmpty(xml)) {
+        $('[name$="MeetingId"]').val($xml.find("MeetingId").text());
+        $('[name$="MasterReference"]').val($xml.find("MasterReference").text());
+        $('[name$="DropDownLocations"]').val($xml.find("LocationId").text());
+        $('[name$="DropDownMeetingTypes"]').val($xml.find("MeetingTypeId").text());
+        $('[name$="TextBoxTitle"]').val($xml.find("Title").text());
+
+        var start = new Date($xml.find("Start").text());
+        $('[name$="TextBoxMeetingStartDate"]').val((start.getMonth() + 1) + '/' + start.getDate() + '/' + start.getFullYear());
+        $('[name$="TextBoxMeetingStartTime"]').val(setTime(start.getHours(), start.getMinutes()));
+
+        var end = new Date($xml.find("End").text());
+        $('[name$="TextBoxMeetingEndDate"]').val((end.getMonth() + 1) + '/' + end.getDate() + '/' + end.getFullYear());
+        $('[name$="TextBoxMeetingEndTime"]').val(setTime(end.getHours(), end.getMinutes()));
+
+        $('[name$="hfClientProgramEnrollmentId"]').val($xml.find("ClientEnrollmentId").text());
+        $('[name$="hfClientId"]').val($xml.find("ClientId").text());
+
+        $('[name$="DropDownListColor"]').val($xml.find("Color").text());
+        $('[name$="TextBoxComments"]').val($xml.find("Comments").text());
+        $('[name$="TextBoxTravelNotes"]').val($xml.find("TravelNotes").text());
+
+        SelectMultipleOptions($xml.find("Calendars").text(), $('[name$="ListBoxCalenders"]'));
+
+        $('.tr-reccurrence-update-option').css('display', $xml.find("MasterReference").text() != null && $xml.find("MasterReference").text() != '-1' ? 'table-row' : 'none');
+        $('[name$="DropDownListReccurringUpdateOption"]').val($xml.find("updateReccurrences").text());
+
+
+        if ($xml.find("MeetingId").text() > -1)
+        {
+
+            var _SelectedClient = SelectedClient;
+            if ($xml.find("ClientId").text() == "-1") {
+                if (_SelectedClient != '') {
+                    $('[name$="DropDownClientEnrollment"]').val('-3');
+                }
+                $('[name$="DropDownClientEnrollment"]').parent().show();
+                $("[id$='selectedClientEnrollment']").text('');
+                $("[name$='hfSelectedClientEnrollment']").val('');
+            }
+            else if (_SelectedClient != $xml.find("ClientId").text()) {
+                $('[name$="DropDownClientEnrollment"]').val('-3');
+                $("[id$='selectedClientEnrollment']").text($xml.find("SelectedClientEnrollment").text());
+                $("[name$='hfSelectedClientEnrollment']").val($xml.find("SelectedClientEnrollment").text());
+                $('[name$="DropDownClientEnrollment"]').parent().hide();
+                $('[name$="hfDifferentClient"]').val(true);
+                $('[name$="hfClientProgramEnrollmentId"]').val($xml.find("ClientProgramEnrollmentId").text());
+                $('[name$="hfClientId"]').val($xml.find("ClientId").text());
+
+            }
+            else {
+                $('[name$="DropDownClientEnrollment"]').parent().show();
+                $("[id$='selectedClientEnrollment']").text($xml.find("SelectedClientEnrollment").text());
+                $("[name$='hfSelectedClientEnrollment']").val($xml.find("SelectedClientEnrollment").text());
+                $('[name$="hfDifferentClient"]').val(false);
+                $('[name$="DropDownClientEnrollment"]').val($xml.find("EnrollmentSelectedValue").text())
+            }
+        }
+        else{
+                $('[name$="DropDownClientEnrollment"]').val($xml.find("EnrollmentSelectedValue").text());
+                $('[name$="hfDifferentClient"]').val($xml.find("HFDifferentClient").text());
+                $('[name$="hfClientProgramEnrollmentId"]').val($xml.find("HFClientProgramEnrollmentId").text());
+                $('[name$="hfClientId"]').val($xml.find("HFClientId").text());
+                $("[id$='selectedClientEnrollment']").text($xml.find("SelectedClientEnrollment").text());
+                $("[name$='hfSelectedClientEnrollment']").val($xml.find("SelectedClientEnrollment").text());
+                SetReccurrenceValues($xmlReccurrence);
+            }
+       
+    }
+
+    if ($xml.find("MeetingId").text() > -1) {
+        if (end < new Date()) {
+            $('#DeleteButton').hide();
+        }
+        else {
+            $('#DeleteButton').show();
+        }
+        $('#btnViewAuditDetails').show();
+        $('#btnPrintMeeting').show();
+        $('.tr-is-reccurrence,.tr-reccurrence-end,.tr-repeat,.tr-frequency').css('display', 'none');
+    }
+    else {
+        $('#btnViewAuditDetails').hide();
+        $('#btnPrintMeeting').hide();
+        $('#DeleteButton').hide();
+    }
+    $('#DivMeeting').modal('show');
+}
+
+function SelectMultipleOptions(XMLObj, ControlName) {
+    var options = XMLObj.split(',');
+    var control = document.getElementById(Panel + "_ListBoxCalenders").options;
+    for (var j = 0; j < control.length; j++) {
+        for (i = 0; i < options.length; i++) {
+            if (control[j].value == options[i])
+                control[j].selected = true;
+
+        }
+    }
+}
+function SetReccurrenceValues($xmlReccurrence) {
+    if (!isEmpty($xmlReccurrence)) {
+        if ($xmlReccurrence.find("CheckBoxRecurrence").text() == "true") {
+            $('.tr-reccurrence-end,.tr-repeat').css('display', 'table-row');
+            $('[name$="CheckBoxRecurrence"]').prop('checked',$xmlReccurrence.find("CheckBoxRecurrence").text() == "true" ? true : false);
+            $("[name$='TextBoxRecurrenceEndDate']").val($xmlReccurrence.find("RrecurrenceEnd").text());
+            $("[name$='DropDownListRepeat']").val($xmlReccurrence.find("Repeat").text());
+
+            if ($xmlReccurrence.find("Repeat").text() == "Daily") {
+                $('.tr-days-recurrence').css('display', 'table-row');
+                $('.tr-frequency').css('display', 'none');
+                $('.tr-months-recurrence').css('display', 'none');
+                $('[name$="CheckBox_Sunday"]').prop('checked',$xmlReccurrence.find("checkbox_Sun").text() == "true" ? true : false);
+                $('[name$="CheckBox_Monday"]').prop('checked',$xmlReccurrence.find("checkbox_Mon").text() == "true" ? true : false);
+                $('[name$="CheckBox_Tuesday"]').prop('checked',$xmlReccurrence.find("checkbox_Tue").text() == "true" ? true : false);
+                $('[name$="CheckBox_Wednesday"]').prop('checked',$xmlReccurrence.find("checkbox_Wed").text() == "true" ? true : false);
+                $('[name$="CheckBox_Thursday"]').prop('checked',$xmlReccurrence.find("checkbox_Thu").text() == "true" ? true : false);
+                $('[name$="CheckBox_Friday"]').prop('checked',$xmlReccurrence.find("checkbox_Fri").text() == "true" ? true : false);
+                $('[name$="CheckBox_Saturday"]').prop('checked',$xmlReccurrence.find("checkbox_Sat").text() == "true" ? true : false);
+            }
+            else if ($xmlReccurrence.find("Repeat").text() == "Weekly") {
+                $('.tr-frequency').css('display', 'table-row');
+                $('.tr-months-recurrence').css('display', 'none');
+                $('.tr-days-recurrence').css('display', 'none');
+                $("[name$='DropDownListFrequency']").val($xmlReccurrence.find("WeeklyText").text());
+            }
+            else if ($xmlReccurrence.find("Repeat").text() == "Monthly") {
+                if ($xmlReccurrence.find("radioButtonMonthly").text() == "true") {
+                    $("[id$='radioMonthly']").prop('checked',$xmlReccurrence.find("radioButtonMonthly").text() == "true" ? true : false);
+                    $('.checkBoxSelection').prop("disabled", "disabled");
+                    ClearCheckbox();
+                }
+                else if ($xmlReccurrence.find("radioButtonDayOfMonth").text() == "true") {
+                    if ($('[id$="TextBoxMeetingStartDate"]').val() != '') {
+                        
+                        $("[id$='MonthlyRadioButton']").prop('checked', $xmlReccurrence.find("radioButtonDayOfMonth").text() == "true" ? true : false);
+                        $('[id$="CheckBox_First"]').prop('checked', $xmlReccurrence.find("checkBox_First").text() == "true" ? true : false);
+                        $('[id$="CheckBox_Second"]').prop('checked', $xmlReccurrence.find("checkBox_Second  ").text() == "true" ? true : false);
+                        $('[id$="CheckBox_Third"]').prop('checked', $xmlReccurrence.find("checkBox_Third").text() == "true" ? true : false);
+                        $('[id$="CheckBox_Fourth"]').prop('checked', $xmlReccurrence.find("checkBox_Fourth").text() == "true" ? true : false);
+                    }
+
+                    $('.checkBoxSelection').removeAttr("disabled");
+                }
+                $('[id$="lblMonthly"]').text($xmlReccurrence.find("LabelMonthly").text());
+                $('[id$="lblWeekly"]').text($xmlReccurrence.find("LabelWeekly").text());
+                $('.tr-days-recurrence').css('display', 'none');
+                $('.tr-months-recurrence').css('display', 'table-row');
+                $('.tr-frequency').css('display', 'none');
+            }
+        }
+    }
+
+}

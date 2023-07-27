@@ -1,0 +1,636 @@
+<%@ Page Title="" Language="C#" MasterPageFile="~/ClientLayout.master" EnableEventValidation="false" AutoEventWireup="true" Inherits="Client_Meetings" CodeBehind="Meetings.aspx.cs" %>
+
+<%@ MasterType VirtualPath="~/ClientLayout.master" %>
+
+<%@ Register Assembly="Telerik.Web.UI" Namespace="Telerik.Web.UI" TagPrefix="telerik" %>
+
+
+<asp:Content ID="xyzsdeContent1" ContentPlaceHolderID="xyzsdehead" runat="Server">
+</asp:Content>
+<asp:Content ID="xyzsdeContent2" ContentPlaceHolderID="xyzsdeMainContentPlaceHolder" runat="Server">
+    <script type="text/javascript">
+        var SelectedClient = '<%= Session["SelectedClient"] %>';
+        var gridDivElement = '<%= calenarMeetingXML.ClientID %>';
+        var Panel = '<%=DropDownLocations.Parent.ClientID%>';
+        // Created Date : 12/06/2018(Kanwaldeep Singh)
+        //Description: Print the calendare. User Story #789 
+        var ReportServer = '<%= ReportServer %>';
+        var sUserId = '<%= sUserId %>';
+    </script>
+
+    <asp:UpdatePanel runat="server" ID="xyzsdeUpdatePanel1">
+        <Triggers>
+            <asp:AsyncPostBackTrigger ControlID="xyzsdeSaveButton" />
+            <asp:AsyncPostBackTrigger ControlID="xyzsdeDeleteButton" />
+
+        </Triggers>
+        <ContentTemplate>
+            <div class="well well-sm smart-accordion-default" ID="xyzsdefilter-well">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" data-parent="#filter-well" href="#collapseFilters" aria-expanded="true" class="">
+                            <i class="fa fa-lg fa-angle-down pull-right"></i>
+                            <i class="fa fa-lg fa-angle-up pull-right"></i>Calendar Filters
+                        </a>
+                    </h4>
+                </div>
+                <div ID="xyzsdecollapseFilters" class="panel-collapse collapse in" aria-expanded="true">
+                    <!--<table class="table filter-table smart-form" style="z-index: 1000">-->
+                    <table class="table filter-table smart-form">
+                        <tr>
+                            <td style="width: 15%">
+                                <label class="label">Calendar Mode:</label>
+                            </td>
+                            <td style="width: 35%">
+                                <label class="select">
+                                    <asp:DropDownList runat="server" ID="xyzsdeDropDownListCalendarMode" AutoPostBack="true" OnSelectedIndexChanged="DropDownListBuilding_SelectedIndexChanged">
+                                        <asp:ListItem Text="Company" Value="Company"></asp:ListItem>
+                                    </asp:DropDownList><i></i>
+                                </label>
+                            </td>
+                            <td>
+                                <label class="label" ID="xyzsdeLabelGroupByCalendar">Group by Calendar:</label>
+                            </td>
+                            <td>
+                                <label class="checkbox">
+                                    <asp:CheckBox runat="server" ID="xyzsdeCheckBoxGroupByCalendar" Checked="true" /><i></i>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width: 15%">
+                                <label class="label">Start Date:</label>
+                            </td>
+                            <td style="width: 35%">
+                                <!--<label class="input display-inline">-->
+                                <label class="input">
+                                    <i class="icon-append fa fa-calendar"></i>
+                                    <asp:TextBox ID="xyzsdeTextBoxFilterStartDate" CssClass="date" runat="server"></asp:TextBox>
+                                </label>
+                            </td>
+                            <td style="width: 15%">
+                                <label class="label">End Date:</label>
+                            </td>
+                            <td style="width: 35%">
+                                <!--<label class="input display-inline">-->
+                                <label class="input">
+                                    <i class="icon-append fa fa-calendar"></i>
+                                    <asp:TextBox ID="xyzsdeTextBoxFilterEndDate" CssClass="date" runat="server"></asp:TextBox>
+                                </label>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <asp:Panel ID="xyzsdeCompanyPanel" runat="server">
+                        <table class="table filter-table smart-form" <%--style="z-index:1000"--%>>
+                            <tr class="select-company">
+                                <td style="width: 15%">
+                                    <label class="label">Active Calendars</label>
+                                    <a href="Javascript:ClearFilters('ListBoxActiveCalendars')">(Clear)</a>
+                                </td>
+                                <td style="width: 35%">
+                                    <label class="select select-multiple">
+                                        <asp:ListBox SelectionMode="Multiple" CssClass="calendar" runat="server" ID="xyzsdeListBoxActiveCalendars" DataValueField="CalendarId" DataTextField="CalendarName"></asp:ListBox>
+                                    </label>
+                                </td>
+                                <td style="width: 15%">
+                                    <label class="label">Meeting Locations</label>
+                                    <a href="Javascript:ClearFilters('ListBoxMeetingLocations')">(Clear)</a>
+                                </td>
+                                <td style="width: 35%">
+                                    <label class="select select-multiple">
+                                        <asp:ListBox SelectionMode="Multiple" CssClass="location" runat="server" ID="xyzsdeListBoxMeetingLocations" DataValueField="GlobalCodeId" DataTextField="CodeName"></asp:ListBox>
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                    </asp:Panel>
+
+                    <table class="table filter-table smart-form">
+                        <tr>
+                            <td style="width: 15%">
+                                <label class="label">Keyword: </label>
+                            </td>
+                            <td style="width: 35%">
+                                <label class="input">
+                                    <asp:TextBox ID="xyzsdeTextBoxKeywordFilter" runat="server"></asp:TextBox>
+                                </label>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </table>
+
+                    <asp:Button runat="server" ID="xyzsdeButtonApplyFilter" Text="Apply Filter" OnClick="ButtonApplyFilter_Click"
+                        CssClass="btn btn-primary btn-xs button" />
+
+                </div>
+            </div>
+            <div ID="xyzsdewidget-grid">
+                <div class="jarviswidget jarviswidget-sortable" ID="xyzsdeCalendarWidget" role="widget">
+                    <header role="heading">
+                        <div class="jarviswidget-ctrls" role="menu">
+                            <a href="javascript:void(0);" class="button-icon jarviswidget-fullscreen-btn" rel="tooltip" title="" data-placement="bottom" data-original-title="Fullscreen">
+                                <i class="fa fa-unsorted"></i>
+                            </a>
+                        </div>
+                        <h2><strong>Scheduled Meetings</strong></h2>
+                    </header>
+                    <div role="contentinfo">
+                        <div class="well well-sm">
+                            <input type="button" value="Add New" class="button btn-xs btn-primary btn" onclick="AddMeeting(-1); return false;" />
+                            <input type="button" value="Export To PDF" class="button btn-xs btn-primary btn" onclick="ExportToPdf(); return false;" />
+                        </div>
+                        <telerik:RadScheduler runat="server"
+                            ID="xyzsdeRadSchedulerCalendar"
+                            OverflowBehavior="Auto"
+                            Skin="Silk"
+                            RenderMode="Lightweight"
+                            AppointmentStyleMode="Default"
+                            AllowInsert="false"
+                            AllowDelete="false"
+                            OnClientTimeSlotClick="ClientTimeSlotClick"
+                            OnNavigationCommand="RadSchedulerCalendar_NavigationCommand"
+                            OnClientAppointmentDoubleClick="EditMeeting"
+                            OnAppointmentDataBound="RadSchedulerCalendar_AppointmentDataBound"
+                            DataKeyField="ID"
+                            DataSubjectField="Subject"
+                            DataStartField="Start"
+                            DataEndField="End"
+                            DayStartTime="05:00"
+                            DayEndTime="23:00"
+                            MonthView-MinimumRowHeight="5"
+                            MonthView-VisibleAppointmentsPerDay="99"
+                            Height="800px"
+                            ShowAllDayRow="true"
+                            CustomAttributeNames="CalendarId"
+                            EnableExactTimeRendering="true">
+                            <TimelineView UserSelectable="false" />
+                            <AgendaView UserSelectable="true" DateColumnWidth="150px" TimeColumnWidth="150px" />
+                        </telerik:RadScheduler>
+                        <asp:HiddenField ID="xyzsdehfCalenderMode" runat="server" Value="Day" />
+                        <p>&nbsp;</p>
+                    </div>
+                </div>
+            </div>
+            
+        <div class="modal fade" ID="xyzsdeDivHolidays" style="z-index: 10000; position: fixed; top: -30px;">
+        <div class="modal-dialog ">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Overlap meeting detail</h4>
+                </div>
+                <div class="modal-body smart-form add-scroll">
+                     <asp:GridView ID="xyzsdeGridViewHolidays" OnRowDataBound="GridViewHolidays_RowDataBound"
+                        EnableViewState="true" runat="server" AutoGenerateColumns="False" CellSpacing="0" CssClass="table smart-form">
+                        <Columns>
+                            <asp:BoundField HeaderStyle-HorizontalAlign="Left" DataField="CalendarId" ItemStyle-CssClass="HiddenDisplay" HeaderStyle-CssClass="HiddenDisplay"/>
+                            <asp:BoundField HeaderStyle-HorizontalAlign="Left" DataField="StartDate" HeaderText="Start Date"
+                                ItemStyle-HorizontalAlign="Left" DataFormatString="{0:MM/dd/yyyy hh:mm tt}"/>
+                             <asp:BoundField HeaderStyle-HorizontalAlign="Left" DataField="EndDate" HeaderText="End Date"
+                                ItemStyle-HorizontalAlign="Left" DataFormatString="{0:MM/dd/yyyy hh:mm tt}"/>
+                             <asp:BoundField HeaderStyle-HorizontalAlign="Left" DataField="CalendarName" HeaderText="Calendar"
+                                ItemStyle-HorizontalAlign="Left" />
+                             <asp:BoundField HeaderStyle-HorizontalAlign="Left" DataField="ErrorMessage" HeaderText="Message"
+                                ItemStyle-HorizontalAlign="Left" />
+                            <asp:BoundField HeaderStyle-HorizontalAlign="Left" DataField="IsBlock" ItemStyle-CssClass="HiddenDisplay" HeaderStyle-CssClass="HiddenDisplay" />
+                             <asp:BoundField HeaderStyle-HorizontalAlign="Left" DataField="ValidationType" ItemStyle-CssClass="HiddenDisplay" HeaderStyle-CssClass="HiddenDisplay" />
+                        </Columns>
+                    </asp:GridView>
+                    <div ID="xyzsdecalenarMeetingXML" runat="server" class="hidden"></div>  
+                     <div ID="xyzsdecalendarMeetingReccurrence" runat="server" class="hidden"></div>
+                </div>
+                    
+                <div class="modal-footer">
+                    <asp:Button Text="Save Meeting" runat="server" force-save="true" ID="xyzsdeSaveValidateMeetings" style="height:auto !important" OnClick="SaveHolidays_Click" CssClass="btn btn-xs btn-primary button" />
+                    <button type="button" ID="xyzsdeButtonEditGridData" style="height:auto !important"  onclick="EditGridData();return false;" class="btn btn-xs btn-primary button">Edit Meeting</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+        </ContentTemplate>
+    </asp:UpdatePanel>
+
+    <div class="modal fade" ID="xyzsdeDivExport" style="z-index: 10000; position: fixed">
+        <div class="modal-dialog ">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Calendar Export</h4>
+                </div>
+                <div class="modal-body smart-form">
+                    <p>Export the visible calendar display to a PDF document with the options below. If you want to print a different view (Day, Week, Month) of the calendar, change your view first and then click the "Export To PDF" button again.</p>
+                    <table class="smart-form table">
+                        <tr>
+                            <td style="width: 150px;" class="no-border">Orientation:
+                            </td>
+                            <td class="no-border">
+                                <label class="select">
+                                    <asp:DropDownList runat="server" ID="xyzsdedropdownOrientation">
+                                        <asp:ListItem Selected="True" Text="Landscape" Value="Landscape"></asp:ListItem>
+                                        <asp:ListItem Selected="False" Text="Portrait" Value="Portrait"></asp:ListItem>
+                                    </asp:DropDownList><i></i>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="no-border">Fit on one page?
+                            </td>
+                            <td class="no-border">
+                                <label class="select">
+                                    <asp:DropDownList runat="server" ID="xyzsdedropdownPaging">
+                                        <asp:ListItem Selected="True" Text="Yes" Value="Yes"></asp:ListItem>
+                                        <asp:ListItem Selected="False" Text="No" Value="No"></asp:ListItem>
+                                    </asp:DropDownList><i></i>
+                                </label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default btn-xs button" data-dismiss="modal">Cancel</button>
+                    <asp:Button ID="xyzsdeButtonExprt" Text="Export To PDF" class="btn btn-primary btn-xs button" runat="server" OnClick="ButtonExprt_Click" OnClientClick="$('#DivExport').modal('hide');" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" ID="xyzsdeDivMeeting" style="z-index: 10000; position: fixed; top: -30px;">
+        <div class="modal-dialog ">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <asp:HiddenField ID="xyzsdeForceSave" Value="false" runat="server" />
+                    <asp:HiddenField ID="xyzsdeMeetingId" runat="server" Value="-1" ClientIDMode="Static" />
+                    <asp:HiddenField ID="xyzsdeMasterReference" runat="server" Value="-1" />
+                    <asp:HiddenField ID="xyzsdeUpdateFuture" runat="server" Value="false" />
+                    <asp:HiddenField ID="xyzsdeForceSaveRecurrence" runat="server" Value="false" />
+                    <h4 class="modal-title">Meeting Details</h4>
+                </div>
+                <div class="modal-body smart-form add-scroll">
+                    <asp:Panel CssClass="Error" runat="server" ID="xyzsdepanelError" Visible="false">
+                        <asp:Literal ID="xyzsdeerrorText" runat="server"></asp:Literal>
+                    </asp:Panel>
+                    <table class="table">
+                        <tr>
+                            <td class="label">Calendar:</td>
+                            <td>
+                                <label class="select select-multiple">
+
+                                    <asp:ListBox SelectionMode="Multiple" Rows="3" runat="server" ID="xyzsdeListBoxCalenders" DataValueField="CalendarId" DataTextField="CalendarName" class="req_field"></asp:ListBox>
+
+                                </label>
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="label">Location:</td>
+                            <td>
+                                <label class="select">
+                                    <asp:DropDownList runat="server" ID="xyzsdeDropDownLocations" DataValueField="GlobalCodeId" DataTextField="CodeName"></asp:DropDownList><i></i>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="label">MeetingType:</td>
+                            <td>
+                                <label class="select">
+                                    <asp:DropDownList runat="server" ID="xyzsdeDropDownMeetingTypes" DataValueField="GlobalCodeId" DataTextField="CodeName"></asp:DropDownList><i></i>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="label">Title:</td>
+                            <td>
+                                <label class="input">
+                                    <asp:TextBox ID="xyzsdeTextBoxTitle" runat="server" class="req_field"></asp:TextBox>
+                                </label>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <label class="label">Start:</label>
+                            </td>
+                            <td>
+                                <label class="input display-inline col-sm-6">
+                                    <i class="icon-append fa fa-calendar"></i>
+                                    <asp:TextBox ID="xyzsdeTextBoxMeetingStartDate" CssClass="date req_field" runat="server"></asp:TextBox>
+                                </label>
+                                <label class="input display-inline col-sm-6">
+                                    <i class="icon-append fa fa-clock-o"></i>
+                                    <input type="text" ID="xyzsdeTextBoxMeetingStartTime" runat="server" class="time req_field" onfocus="CheckDefaultCheckBox();GetDayAndDate()" />
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label class="label">End:</label>
+                            </td>
+                            <td>
+                                <label class="input display-inline col-sm-6">
+                                    <i class="icon-append fa fa-calendar"></i>
+                                    <asp:TextBox ID="xyzsdeTextBoxMeetingEndDate" CssClass="date req_field" runat="server"></asp:TextBox>
+                                </label>
+                                <label class="input display-inline col-sm-6">
+                                    <i class="icon-append fa fa-clock-o"></i>
+                                    <input type="text" ID="xyzsdeTextBoxMeetingEndTime" runat="server" class="time req_field" />
+                                </label>
+                            </td>
+                        </tr>
+                        <tr style="display: none" class="tr-is-reccurrence">
+                            <td class="label">Recurrence:<br />
+                                &nbsp;</td>
+                            <td>
+                                <label class="checkbox" style="display: inline; float: left;">
+                                    <asp:CheckBox runat="server" ID="xyzsdeCheckBoxRecurrence" /><i></i>
+                                </label>
+                                <span style="display: inline;">Note: Any recurring meeting that falls outside the normal calendar days/hours will not be created.</span>
+                            </td>
+                        </tr>
+                        <tr style="display: none" class="tr-reccurrence-end">
+                            <td class="label">Recurrence End:</td>
+                            <td>
+                                <label class="input display-inline col-sm-12">
+                                    <i class="icon-append fa fa-calendar"></i>
+                                    <asp:TextBox ID="xyzsdeTextBoxRecurrenceEndDate" CssClass="date" runat="server"></asp:TextBox>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr style="display: none" class="tr-repeat">
+
+                            <td class="label">Repeat:</td>
+                            <td>
+                                <label class="select display-inline col-sm-12">
+                                    <asp:DropDownList ID="xyzsdeDropDownListRepeat" runat="server">
+                                        <asp:ListItem Text="" Value=""></asp:ListItem>
+                                        <asp:ListItem Text="Daily" Value="Daily"></asp:ListItem>
+                                        <asp:ListItem Text="Weekly" Value="Weekly"></asp:ListItem>
+                                        <asp:ListItem Text="Monthly" Value="Monthly"></asp:ListItem>
+                                    </asp:DropDownList><i></i>
+                                </label>
+
+                                <div style="display: none" class="tr-days-recurrence" ID="xyzsdeRepeatDays" runat="server">
+                                    <label class="checkbox" style="float: left">
+                                        <asp:CheckBox ID="xyzsdeCheckBox_Sunday" runat="server" /><i></i>Sunday</label>
+                                    <label class="checkbox" style="float: left">
+                                        <asp:CheckBox ID="xyzsdeCheckBox_Monday" runat="server" /><i></i>Monday</label>
+                                    <label class="checkbox" style="float: left">
+                                        <asp:CheckBox ID="xyzsdeCheckBox_Tuesday" runat="server" /><i></i>Tuesday</label>
+                                    <label class="checkbox" style="float: left">
+                                        <asp:CheckBox ID="xyzsdeCheckBox_Wednesday" runat="server" /><i></i>Wednesday</label>
+                                    <label class="checkbox" style="float: left">
+                                        <asp:CheckBox ID="xyzsdeCheckBox_Thursday" runat="server" /><i></i>Thursday</label>
+                                    <label class="checkbox" style="float: left">
+                                        <asp:CheckBox ID="xyzsdeCheckBox_Friday" runat="server" /><i></i>Friday</label>
+                                    <label class="checkbox" style="float: left">
+                                        <asp:CheckBox ID="xyzsdeCheckBox_Saturday" runat="server" /><i></i>Saturday</label>
+
+                                </div>
+
+                                <div style="display: none" class="tr-months-recurrence" ID="xyzsdeDivMonthly" runat="server">
+                                    <table class="smart-form">
+                                        <tr>
+                                            <td>
+                                                <label class="radio">
+                                                    <input type="radio" name="MonthlyRadioButton" ID="xyzsderadioMonthly" runat="server" onchange="toggleCheckboxValues()" value="Monthly" checked>
+                                                    <i></i>
+                                                    <label ID="xyzsdelblMonthly" runat="server"></label>
+                                                    <asp:HiddenField  ID="xyzsdelabelMonthly" runat="server" />
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <label class="radio">
+                                                    <input type="radio" name="MonthlyRadioButton" ID="xyzsderadioDayOfMonth" runat="server" onchange="toggleCheckboxValues()" value="XDayOfWeek" />
+                                                    <i></i>
+                                                    <label ID="xyzsdelblWeekly" runat="server"></label>
+                                                    <asp:HiddenField ID="xyzsdelabelWeekly" runat="server" />
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <div class="tr-weekdayofmonths-recurrence" ID="xyzsdeDivWeekdayofmonths" runat="server">
+
+                                        <label class="checkbox" style="float: left">
+                                            <input type="checkbox" ID="xyzsdeCheckBox_First" class="checkBoxSelection" runat="server" disabled="disabled" /><i></i>First   &nbsp;&nbsp;</label>
+                                        <%-- <asp:CheckBox ID="xyzsdeCheckBox_First" runat="server" /><i></i>First   &nbsp;&nbsp;</label>--%>
+                                        <label class="checkbox" style="float: left">
+                                            <input type="checkbox" ID="xyzsdeCheckBox_Second" runat="server" class="checkBoxSelection" disabled="disabled" /><i></i>Second   &nbsp;&nbsp;</label>
+                                        <label class="checkbox" style="float: left">
+                                            <input type="checkbox" ID="xyzsdeCheckBox_Third" runat="server" class="checkBoxSelection" disabled="disabled" /><i></i>Third  &nbsp;&nbsp;</label>
+                                        <label class="checkbox" style="float: left">
+                                            <input type="checkbox" ID="xyzsdeCheckBox_Fourth" runat="server" class="checkBoxSelection" disabled="disabled" /><i></i>Fourth 
+                                        </label>
+                                    </div>
+
+                                </div>
+                            </td>
+
+                        </tr>
+
+                        <tr style="display: none" class="tr-frequency">
+                            <td class="label">Frequency:</td>
+                            <td>
+                                <label class="select">
+                                    <asp:DropDownList ID="xyzsdeDropDownListFrequency" runat="server">
+                                        <asp:ListItem Text="1 Week" Value="1"></asp:ListItem>
+                                        <asp:ListItem Text="2 Weeks" Value="2"></asp:ListItem>
+                                        <asp:ListItem Text="3 Week" Value="3"></asp:ListItem>
+                                        <asp:ListItem Text="4 Weeks" Value="4"></asp:ListItem>
+                                    </asp:DropDownList>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label class="label">Client / Enrollment:</label></td>
+                            <td>
+                                <asp:HiddenField runat="server" ID="xyzsdehfClientProgramEnrollmentId" Value="-1" />
+                                <asp:HiddenField runat="server" ID="xyzsdehfClientId" Value="-1" />
+                                <asp:HiddenField runat="server" ID="xyzsdehfDifferentClient" Value="false" />
+                                <div ID="xyzsdeselectedClientEnrollment" runat="server"></div>
+                                <asp:HiddenField runat="server" ID="xyzsdehfSelectedClientEnrollment" Value=""/>
+                                <label class="select">
+                                    <asp:DropDownList runat="server" ID="xyzsdeDropDownClientEnrollment" DataValueField="ClientProgramEnrollmentId" DataTextField="Program">
+                                    </asp:DropDownList>
+                                    <i></i>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label class="label">Preferred Color:</label>
+                            </td>
+                            <td>
+                                <label class="select">
+                                    <asp:DropDownList runat="server" ID="xyzsdeDropDownListColor">
+                                        <asp:ListItem Text="Select one..." Value=""></asp:ListItem>
+                                        <asp:ListItem Text="Dark Blue" Value="rsCategoryDarkBlue"></asp:ListItem>
+                                        <asp:ListItem Text="Blue" Value="rsCategoryBlue"></asp:ListItem>
+                                        <asp:ListItem Text="Dark Green" Value="rsCategoryDarkGreen"></asp:ListItem>
+                                        <asp:ListItem Text="Green" Value="rsCategoryGreen"></asp:ListItem>
+                                        <asp:ListItem Text="Dark Red" Value="rsCategoryDarkRed"></asp:ListItem>
+                                        <asp:ListItem Text="Orange" Value="rsCategoryOrange"></asp:ListItem>
+                                        <asp:ListItem Text="Pink" Value="rsCategoryPink"></asp:ListItem>
+                                        <asp:ListItem Text="Red" Value="rsCategoryRed"></asp:ListItem>
+                                        <asp:ListItem Text="Violet" Value="rsCategoryViolet"></asp:ListItem>
+                                        <asp:ListItem Text="Yellow" Value="rsCategoryYellow"></asp:ListItem>
+                                    </asp:DropDownList><i></i>
+                                </label>
+                            </td>
+                        </tr>
+                         <tr>
+                            <td>
+                                <label class="label">Travel Notes:</label>
+                            </td>
+                            <td>
+                                <label class="textarea">
+                                    <asp:TextBox ID="xyzsdeTextBoxTravelNotes" TextMode="MultiLine" Rows="3" Columns="10" runat="server"></asp:TextBox>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label class="label">Comments:</label>
+                            </td>
+                            <td>
+                                <label class="textarea">
+                                    <asp:TextBox ID="xyzsdeTextBoxComments" TextMode="MultiLine" Rows="3" Columns="10" runat="server"></asp:TextBox>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr style="display: none" class="tr-reccurrence-update-option">
+                            <td>
+                                <label class="label">Recurring meeting options</label></td>
+                            <td>
+                                <label class="select">
+                                    <asp:DropDownList runat="server" ID="xyzsdeDropDownListReccurringUpdateOption">
+                                        <asp:ListItem Text="Change only this meeting occurrence" Value="false"></asp:ListItem>
+                                        <asp:ListItem Text="Change this meeting and future occurrences" Value="true"></asp:ListItem>
+                                    </asp:DropDownList><i></i>
+                                </label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="modal-footer">
+                    <a href="javascript:void(0)" onclick="viewprint(ReportServer,sUserId)">
+                        <img ID="xyzsdebtnPrintMeeting" src="../App_Themes/Images/print.png" style="cursor: pointer" title="Print" /></a>&nbsp;&nbsp;
+                    <img class="view" src="../App_Themes/Images/info.png" style="cursor: pointer" title='View Detail' ID="xyzsdebtnViewAuditDetails"
+                        onclick="ViewAuditDetails()" />&nbsp;&nbsp;
+                    <asp:Button Text="Cancel Meeting" runat="server" ID="xyzsdeDeleteButton" OnClientClick="return confirm('Are you sure you want to cancel this meeting?');" OnClick="DeleteButton_Click" CssClass="btn btn-xs btn-danger button left" ClientIDMode="Static" />
+                    <button class="btn btn-default btn-xs button" data-dismiss="modal">Close</button>
+                    <asp:Button Text="Save" runat="server" ID="xyzsdeSaveButton" OnClick="SaveButton_Click" CssClass="btn btn-xs btn-primary button" />
+                </div>
+            </div>
+        </div>
+    </div>
+   
+
+
+
+</asp:Content>
+<asp:Content ID="xyzsdeContent3" ContentPlaceHolderID="xyzsdeScriptPlaceHolder" runat="Server">
+    <!-- JARVIS WIDGETS -->
+    <script type="text/javascript" src="/App_Themes/js/smartwidgets/jarvis.widget.min.js?v=<% =ConfigurationManager.AppSettings["JSVersion"].ToString() %>"></script>
+    <script type="text/javascript" src="/App_Themes/JS/Meetings.js?v=<% =ConfigurationManager.AppSettings["JSVersion"].ToString() %>"></script>
+    <script type="text/javascript">
+        debugger;
+        $telerik.disposeElement = function (element) {
+            if (typeof (Sys.WebForms) == "undefined")
+                return;
+            var prm = Sys.WebForms.PageRequestManager.getInstance();
+            if (prm && prm._destroyTree)
+                prm._destroyTree(element);
+            else if (Sys.Application.disposeElement)
+                Sys.Application.disposeElement(element, true);
+        };
+
+        Sys.WebForms.PageRequestManager.getInstance().add_beginRequest(BeginRequestHandler);
+        var postBackElementID;
+        function BeginRequestHandler(sender, args) {
+            try {
+                postBackElementID = args.get_postBackElement().id.substring(args.get_postBackElement().id.lastIndexOf("_") + 1);
+            }
+            catch (e) {
+            }
+        }
+        Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function (sender, args) {
+            if (args.get_error() != null) {
+                var msg = args.get_error().message;
+                if (args.get_error().httpStatusCode == 430) {
+                    if (postBackElementID == "SaveValidateMeetings" && confirm(msg.replace(args.get_error().name + ':', ''))) {
+                        $('[name$="ForceSave"]').val('true');
+                        $('[name$="SaveHolidays"]').click();
+                    }
+                    if (postBackElementID != "SaveValidateMeetings" && confirm(msg.replace(args.get_error().name + ':', ''))) {
+                        $('[name$="ForceSave"]').val('true');
+                        $('[name$="SaveButton"]').click();
+                    }
+
+                }
+                else {
+                    showErrorMessage(msg.replace(args.get_error().name + ':', ''));
+                  
+                   
+                }
+                args.set_errorHandled(true);
+                $('#DivHolidays').modal('hide');
+                $(".modal-fade").modal("hide");
+                $(".modal-backdrop").remove();
+            }
+           
+            else {
+               
+                $('#DivMeeting').modal('hide');
+                if (postBackElementID == "SaveValidateMeetings") {
+                    $('#DivHolidays').modal('hide');
+                    $(".modal-fade").modal("hide");
+                    $(".modal-backdrop").remove();
+                }
+                InitFullScreenWidget();
+                if (_widgetFullscreenState) {
+                    $('.jarviswidget-fullscreen-btn').click();
+                    _widgetFullscreenState = true;
+
+                    $('#widget-grid').css('position', 'fixed');
+                    $('#widget-grid').zIndex(10000);
+
+                } else {
+                    $('#widget-grid').css('position', '');
+                    $('#widget-grid').zIndex(0);
+                }
+            }
+
+
+        });
+
+        $(function () {
+            InitCal({
+                Elem: $('[name$="TextBoxMeetingStartDate"]'), Title: 'Meeting Start Date', onClose: function () {
+                    if ($('[name$="TextBoxMeetingStartDate"]').val() != '') {
+                        $('[name$="TextBoxMeetingEndDate"]').val($('[name$="TextBoxMeetingStartDate"]').val());
+                    }
+                }
+            });
+            InitCalendar($('[name$="TextBoxMeetingEndDate"]'), 'Meeting End Date');
+            InitCalendar($('[name$="TextBoxRecurrenceEndDate"]'), 'Recurrence End Date');
+            InitCalendar($('[name$="TextBoxFilterStartDate"]'), 'Filter Start Date');
+            InitCalendar($('[name$="TextBoxFilterEndDate"]'), 'Filter End Date');
+
+            $('.time').timepicker(getTimepickerOptions());
+            $('.time').on("timeFormatError", function (e) { timepickerFormatError($(this).attr('id')); });
+
+            InitFullScreenWidget();
+      
+        });
+
+
+    </script>
+
+
+</asp:Content>
+

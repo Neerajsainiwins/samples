@@ -1,0 +1,1174 @@
+using PeakSystem.BusinessService;
+using PeakSystem.DataServices.Exceptions;
+using PeakSystem.Web.Common;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.HtmlControls;
+using System.Web.UI.WebControls;
+using System.Xml;
+using System.Xml.Linq;
+using Telerik.Web.UI;
+using Telerik.Web.UI.Scheduler;
+
+public partial class Client_Meetings : ClientBasePage
+{
+    public string ReportServer, sUserId;
+    DataSet DataSetMeetingTable = null;
+    DataTable DataTableHolidayMeeting = null;
+    DataSet DataSetDeletedMeetingTable = null;
+    Client ClientsObject = null;
+    Clients _Clientobject = null;
+    CloudAPI KioskApi = null;
+    public string reccurenceXML=string.Empty;
+    private PeakSystem.ErrorLogging.ErrorLogging _errorLogging = PeakSystem.ErrorLogging.ErrorLogging.Getinstance;
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        Master.InnerTitle = "Calendar Setup";
+
+
+        if (!IsPostBack)
+        {
+            if (Session["SelectedClient"] != null)
+            {
+                DropDownListCalendarMode.Items.Add(new ListItem("Client", "Client"));
+                GetMeetingAndActiveEnrollements(int.Parse(Session["SelectedClient"].ToString()), int.Parse(((SitePrinciple)Session["UserContext"]).DataRowUser["DefaultCompanyId"].ToString()));
+            }
+
+            BindCalendars();
+            BindMeetingLocations();
+            BindMeetingTypes();
+            RegisterScripts();
+
+            DropDownListRepeat.Attributes.Add("onchange", "frequencyChanged(this)");
+            CheckBoxRecurrence.Attributes.Add("onclick", "onReccurrenceChecked(this)");
+            DropDownClientEnrollment.Attributes.Add("onchange", "PopUpDifferentClient(this)");
+
+            DropDownClientEnrollment.Items.Insert(0, new ListItem("Select one..", "-3"));
+            DropDownClientEnrollment.Items.Add(new ListItem("A different client / enrollment", "-2"));
+
+            hfCalenderMode.Value = RadSchedulerCalendar.SelectedView.ToString();
+            TextBoxFilterStartDate.Text = DateTime.Now.AddDays(-30).ToString("MM/dd/yyy");
+            TextBoxFilterEndDate.Text = DateTime.Now.AddDays(30).ToString("MM/dd/yyy");
+
+            if (Session["UserContext"] != null)
+                RadSchedulerCalendar.HoursPanelTimeFormat = Convert.ToString(((SitePrinciple)Session["UserContext"]).DataRowUser["FullDateFormat"]) == "Y" ? "H:mm" : "h:mm tt";
+
+            LoadFilters();
+            RegisterScriptsCloseModal();
+            ReportServer = ConfigurationManager.AppSettings["ReportServer"].ToString();
+            Reports _ReportsObject = new Reports();
+            int UserId = Convert.ToInt32(((SitePrinciple)HttpContext.Current.Session["UserContext"]).DataRowUser["UserId"]);
+            sUserId = _ReportsObject.ScrambleClientId(UserId);
+        }
+    }
+
+    private void GetMeetingAndActiveEnrollements(int clientId, int companyId)
+    {
+        Meetings _meetingsBA = new Meetings();
+
+        DataTable DtTemp = _meetingsBA.GetClientAndActiveEnrollments(clientId, companyId);
+        DropDownClientEnrollment.DataSource = DtTemp;
+        DropDownClientEnrollment.DataBind();
+    }
+
+    protected void DropDownListBuilding_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        ActivatePanels();
+        RegisterScripts();
+    }
+
+    protected void ButtonApplyFilter_Click(object sender, EventArgs e)
+    {
+        SaveFilterVariables();
+        if (DropDownListCalendarMode.SelectedValue.Equals("Company"))
+        {
+            LoadMeetings();
+        }
+        else
+        {
+            BindClientSchedule();
+        }
+
+        RegisterScripts();
+    }
+
+    private void RegisterScripts()
+    {
+        string script = "InitCalendar($('[name$=\"TextBoxFilterStartDate\"]'), 'Filter Start Date'); InitCalendar($('[name$=\"TextBoxFilterEndDate\"]'), 'Filter End Date');";
+        ScriptManager.RegisterStartupScript(this, this.GetType(), "test", script, true);
+    }
+
+    private void LoadMeetings()
+    {
+        if (DropDownListCalendarMode.SelectedValue.Equals("Company"))
+        {
+            BindMeetings();
+        }
+        else
+        {
+            BindClientSchedule();
+        }
+    }
+
+    private void SaveFilterVariables()
+    {
+        Session["MeetingCalenderMode"] = DropDownListCalendarMode.SelectedValue;
+        Session["MeetingStartDate"] = TextBoxFilterStartDate.Text;
+        Session["MeetingEndDate"] = TextBoxFilterEndDate.Text;
+        Session["MeetingsGroupByCalendar"] = CheckBoxGroupByCalendar.Checked;
+
+        if (DropDownListCalendarMode.SelectedValue.Equals("Company"))
+        {
+            var selectedCalendars = ListBoxActiveCalendars.Items.Cast<ListItem>().Where(item => item.Selected);
+            Session["MeetingActiveCalendars"] = string.Join(",", selectedCalendars.Select(p => p.Value));
+
+            var meetingLocations = ListBoxMeetingLocations.Items.Cast<ListItem>().Where(item => item.Selected);
+            Session["MeetingLocations"] = string.Join(",", meetingLocations.Select(p => p.Value));
+        }
+
+        Session["MeetingKeyword"] = TextBoxKeywordFilter.Text;
+    }
+
+    private void LoadFilters()
+    {
+        if (Session["MeetingCalenderMode"] != null)
+        {
+            DropDownListCalendarMode.SelectedValue = Session["MeetingCalenderMode"].ToString();
+            if (DropDownListCalendarMode.SelectedValue.Equals("Company"))
+            {
+                CompanyPanel.Visible = true;
+                if (Session["MeetingActiveCalendars"] != null)
+                {
+                    var selectedCalendars = Session["MeetingActiveCalendars"].ToString().Split(',').Select(i => i).ToList();
+                    foreach (ListItem item in ListBoxActiveCalendars.Items)
+                    {
+                        item.Selected = selectedCalendars.Contains(item.Value);
+                    }
+                }
+
+                if (Session["MeetingLocations"] != null)
+                {
+                    var selectedLocations = Session["MeetingLocations"].ToString().Split(',').Select(i => i).ToList();
+                    foreach (ListItem item in ListBoxMeetingLocations.Items)
+                    {
+                        item.Selected = selectedLocations.Contains(item.Value);
+                    }
+                }
+            }
+            else
+            {
+                CompanyPanel.Visible = false;
+            }
+        }
+
+        if (Session["MeetingStartDate"] != null)
+        {
+            TextBoxFilterStartDate.Text = Session["MeetingStartDate"].ToString();
+        }
+
+        if (Session["MeetingEndDate"] != null)
+        {
+            TextBoxFilterEndDate.Text = Session["MeetingEndDate"].ToString();
+        }
+
+        if (Session["MeetingKeyword"] != null)
+        {
+            TextBoxKeywordFilter.Text = Session["MeetingKeyword"].ToString();
+        }
+
+        if (Session["MeetingsGroupByCalendar"] != null)
+        {
+            CheckBoxGroupByCalendar.Checked = Convert.ToBoolean(Session["MeetingsGroupByCalendar"]);
+        }
+    }
+
+    protected void SaveButton_Click(object sender, EventArgs e)
+    {
+        SaveMeeting();
+        ClearFields();
+    }
+    protected void SaveHolidays_Click(object sender, EventArgs e)
+    {
+        SaveMeetingWithValidationHolidays();
+        ClearFieldsMeetings();
+        RegisterScriptsCloseModal();
+
+    }
+    private void ActivatePanels()
+    {
+        if (DropDownListCalendarMode.SelectedValue.Equals("Company"))
+        {
+            CompanyPanel.Visible = true;
+            ClearCalendar();
+        }
+        else
+        {
+            CompanyPanel.Visible = false;
+            BindClientSchedule();
+        }
+    }
+
+    private void ClearCalendar()
+    {
+        RadSchedulerCalendar.DataSource = new List<Appointment>();
+        RadSchedulerCalendar.DataBind();
+        ListBoxActiveCalendars.ClearSelection();
+        ListBoxMeetingLocations.ClearSelection();
+
+    }
+
+    private void BindCalendars()
+    {
+        Schedule _schedule = new Schedule();
+        DataTable _data = _schedule.GetCalendars();
+        if (_data.Select("Active='Y'").Count() > 0)
+        {
+            ListBoxActiveCalendars.DataSource = _data.Select("Active='Y'").CopyToDataTable();
+            ListBoxCalenders.DataSource = _data.Select("Active='Y'").CopyToDataTable();
+        }
+        else
+        {
+            ListBoxActiveCalendars.DataSource = _data;
+            ListBoxCalenders.DataSource = _data;
+        }
+        ListBoxActiveCalendars.DataBind();
+        ListBoxCalenders.DataBind();
+    }
+
+    private void BindMeetingLocations()
+    {
+        CommonAdministration _common = new CommonAdministration();
+        DataTable _data = _common.GetGlobalCodes(-1, -1, "MeetingLocation");
+        ListBoxMeetingLocations.DataSource = _data;
+        ListBoxMeetingLocations.DataBind();
+        if (_data.Select("Active='Y'").Count() > 0)
+            DropDownLocations.DataSource = _data.Select("Active='Y'").CopyToDataTable();
+        else
+            DropDownLocations.DataSource = _data;
+        DropDownLocations.DataBind();
+
+        DropDownLocations.Items.Insert(0, new ListItem("Select one...", ""));
+        DropDownLocations.SelectedIndex = -1;
+
+    }
+
+    private void BindMeetingTypes()
+    {
+        CommonAdministration _common = new CommonAdministration();
+        DataTable _data = _common.GetGlobalCodes(-1, -1, "MeetingType");
+        if (_data.Select("Active='Y'").Count() > 0)
+            DropDownMeetingTypes.DataSource = _data.Select("Active='Y'").CopyToDataTable();
+        else
+            DropDownMeetingTypes.DataSource = _data;
+        DropDownMeetingTypes.DataBind();
+
+        DropDownMeetingTypes.Items.Insert(0, new ListItem("Select one...", ""));
+        DropDownMeetingTypes.SelectedIndex = -1;
+    }
+
+    private void BindMeetings()
+    {
+        try
+        {
+            List<Appointment> _appointments = new List<Appointment>();
+
+            Meetings _meetingsBA = new Meetings();
+
+            string _selectedCalendars = string.Empty;
+            foreach (ListItem item in ListBoxActiveCalendars.Items)
+            {
+                if (item.Selected)
+                    _selectedCalendars += item.Value + ",";
+            }
+
+            string _selectedLocations = string.Empty;
+            foreach (ListItem item in ListBoxMeetingLocations.Items)
+            {
+                if (item.Selected)
+                    _selectedLocations += item.Value + ",";
+            }
+
+            DateTime? nullDate = null;
+            DateTime? _startDate = TextBoxFilterStartDate.Text.Length > 0 ? DateTime.Parse(TextBoxFilterStartDate.Text) : nullDate;
+            DateTime? _endDate = TextBoxFilterEndDate.Text.Length > 0 ? DateTime.Parse(TextBoxFilterEndDate.Text) : nullDate;
+            string _keyword = string.IsNullOrEmpty(TextBoxKeywordFilter.Text.Trim()) ? "-1" : TextBoxKeywordFilter.Text.Trim();
+            DataTable _data = _meetingsBA.GetMeetings(int.Parse(((SitePrinciple)Session["UserContext"]).DataRowUser["DefaultCompanyId"].ToString()),
+                calendarId:
+                _selectedCalendars.Trim(new char[] { ',' }),
+                locationId:
+                _selectedLocations.Trim(new char[] { ',' }),
+                startDate:
+                _startDate,
+                endDate:
+                _endDate,
+                keyword:
+                    _keyword
+                );
+
+            SetGroupBy(_data.Rows.Count);
+
+            foreach (DataRow row in _data.Rows)
+            {
+                Appointment appointment = new Appointment();
+                appointment.ID = row["MeetingId"];
+
+                appointment.Subject = row["Title"].ToString();
+
+                appointment.Start = DateTime.Parse(row["StartTime"].ToString());
+
+                appointment.End = DateTime.Parse(row["EndTime"].ToString());
+
+                appointment.Attributes.Add("CalendarId", row["CalendarId"].ToString());
+
+                if (RadSchedulerCalendar.Resources.GetResource("Calendar", row["CalendarId"].ToString()) == null)
+                    RadSchedulerCalendar.Resources.Add(new Resource("Calendar", row["CalendarId"].ToString(), row["CalendarName"].ToString()));
+
+                appointment.DataItem = row;
+
+                _appointments.Add(appointment);
+
+            }
+
+            RadSchedulerCalendar.DataSource = _appointments;
+            RadSchedulerCalendar.DataBind();
+
+        }
+
+        catch(Exception Ex)
+        {
+            _errorLogging.LogError(Ex, Request.UrlReferrer.LocalPath);
+        }
+    }
+
+    private void BindClientSchedule()
+    {
+        List<Appointment> _appointments = new List<Appointment>();
+
+        Client _clientBA = new Client();
+
+        DateTime? nullDate = null;
+        DateTime? _startDate = TextBoxFilterStartDate.Text.Length > 0 ? DateTime.Parse(TextBoxFilterStartDate.Text) : nullDate;
+        DateTime? _endDate = TextBoxFilterEndDate.Text.Length > 0 ? DateTime.Parse(TextBoxFilterEndDate.Text) : nullDate;
+        string _keyword = string.IsNullOrEmpty(TextBoxKeywordFilter.Text.Trim()) ? "-1" : TextBoxKeywordFilter.Text.Trim();
+
+        DataSet _data = _clientBA.GetClientScheduleSummary(int.Parse(Session["SelectedClient"].ToString()), _startDate, _endDate,
+            int.Parse(((SitePrinciple)Session["UserContext"]).DataRowUser["DefaultCompanyId"].ToString()),_keyword);
+
+        SetGroupBy(_data.Tables[0].Rows.Count);
+
+        foreach (DataRow row in _data.Tables[0].Rows)
+        {
+            Appointment appointment = new Appointment();
+            appointment.ID = row["Id"];
+
+            appointment.Subject = row["Title"].ToString();
+
+            appointment.Start = DateTime.Parse(row["Start"].ToString());
+
+            appointment.End = DateTime.Parse(row["End"].ToString());
+
+            appointment.Attributes.Add("CalendarId", row["CalendarId"].ToString());
+
+            if (RadSchedulerCalendar.Resources.GetResource("Calendar", row["CalendarId"].ToString()) == null)
+                RadSchedulerCalendar.Resources.Add(new Resource("Calendar", row["CalendarId"].ToString(), row["CalendarName"].ToString()));
+
+            appointment.DataItem = row;
+
+            _appointments.Add(appointment);
+
+        }
+
+        RadSchedulerCalendar.DataSource = _appointments;
+        RadSchedulerCalendar.DataBind();
+    }
+    private void SetGroupBy(int rowCount)
+    {
+        RadSchedulerCalendar.Resources.Clear();
+        RadSchedulerCalendar.ResourceTypes.Clear();
+
+        ResourceType calendar = new ResourceType("Calendar");
+        calendar.ForeignKeyField = "CalendarId";
+        calendar.AllowMultipleValues = true;
+        RadSchedulerCalendar.ResourceTypes.Add(calendar);
+
+        if (CheckBoxGroupByCalendar.Checked && rowCount > 0)
+        {
+            RadSchedulerCalendar.GroupBy = "Calendar";
+            RadSchedulerCalendar.GroupingDirection = GroupingDirection.Horizontal;
+        }
+        else
+        {
+            RadSchedulerCalendar.GroupBy = String.Empty;
+        }
+    }
+
+    private void SaveMeeting()
+    {
+        Meetings _meetingsBA = new Meetings();
+
+        try
+        {
+            ValidateMeetingDetails();
+
+            int clientId = -1;
+            int enrollmentId = -1;
+            string SelectedClientEnrollmentText = hfSelectedClientEnrollment.Value;
+            int enrollmentSelectedValue = int.Parse(DropDownClientEnrollment.SelectedValue);
+
+            if (DropDownListCalendarMode.SelectedValue.Equals("Client"))
+            {
+                clientId = int.Parse(Session["SelectedClient"].ToString());
+
+                if ((enrollmentSelectedValue == -3) || (enrollmentSelectedValue == -1))
+                {
+                    enrollmentId = -1;
+                }
+                else if (enrollmentSelectedValue == -2)
+                {
+                    enrollmentId = int.Parse(hfClientProgramEnrollmentId.Value);
+                }
+                else
+                {
+                    enrollmentId = enrollmentSelectedValue;
+                }
+            }
+
+            else
+            {
+                if (hfDifferentClient.Value == "true")
+                {
+                    clientId = int.Parse(hfClientId.Value);
+                    enrollmentId = hfClientProgramEnrollmentId.Value == string.Empty ? -1 : int.Parse(hfClientProgramEnrollmentId.Value);
+                }
+                else if (int.Parse(DropDownClientEnrollment.SelectedValue) == -1) // Client selected
+                {
+                    clientId = int.Parse(Session["SelectedClient"].ToString());
+                    enrollmentId = -1;
+                    hfClientId.Value = "-1";
+                    hfClientProgramEnrollmentId.Value = "-1";
+                }
+                else if (int.Parse(DropDownClientEnrollment.SelectedValue) == -3) // -- Select One--
+                {
+                    clientId = -1;
+                    enrollmentId = -1;
+                }
+                else if (int.Parse(DropDownClientEnrollment.SelectedValue) == -2) // Different Client/Enrollment
+                {
+                    clientId = int.Parse(hfClientId.Value);
+                    enrollmentId = int.Parse(hfClientProgramEnrollmentId.Value);
+                }
+                else // Enrollment selected
+                {
+                    clientId = int.Parse(Session["SelectedClient"].ToString());
+                    enrollmentId = int.Parse(DropDownClientEnrollment.SelectedValue);
+                    hfClientId.Value = "-1";
+                    hfClientProgramEnrollmentId.Value = "-1";
+                }
+            }
+
+
+
+            if (DropDownListRepeat.SelectedValue == "Daily" && CheckBoxRecurrence.Checked == true)
+            {
+                RecurrenceDays();
+            }
+
+            List<int> calendars = new List<int>();
+
+            foreach (ListItem item in ListBoxCalenders.Items)
+            {
+                if (item.Selected)
+                {
+                    calendars.Add(int.Parse(item.Value));
+                }
+            }
+            bool IsReccurrence = CheckBoxRecurrence.Checked ? true : false;
+
+            if (IsReccurrence)
+            {
+                reccurenceXML= GetRecurrenceXML();
+            }
+            DataTableHolidayMeeting = ValidateCalendarHolidays(calendars, DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingStartDate.Text, TextBoxMeetingStartTime.Value)), DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingEndDate.Text, TextBoxMeetingEndTime.Value)), 
+                recurrenceMeeting: CheckBoxRecurrence.Checked ? true : false, ClientId:clientId, MeetingId:int.Parse(MeetingId.Value));
+
+
+
+            string calendarFields = GetCalendarXML(int.Parse(MeetingId.Value), calendars, DropDownLocations.SelectedValue.Equals("") ? -1 : int.Parse(DropDownLocations.SelectedValue),
+              DropDownMeetingTypes.SelectedValue.Equals("") ? -1 : int.Parse(DropDownMeetingTypes.SelectedValue),
+              DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingStartDate.Text, TextBoxMeetingStartTime.Value)),
+              DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingEndDate.Text, TextBoxMeetingEndTime.Value)),
+              TextBoxTitle.Text,((SitePrinciple)HttpContext.Current.Session["UserContext"]).DataRowUser["Username"].ToString(),
+               DropDownListColor.SelectedValue, TextBoxComments.Text, TextBoxTravelNotes.Text, clientId, enrollmentId,ForceSave.Value.Equals("true") ? true : false, 
+               Reccurrences: Recurrences(DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingStartDate.Text, TextBoxMeetingStartTime.Value)),
+              DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingEndDate.Text, TextBoxMeetingEndTime.Value))
+              ), updateReccurrences: bool.Parse(DropDownListReccurringUpdateOption.SelectedValue), IsRecurrenceMeeting: IsReccurrence, 
+               selectedClientEnrollmentC: SelectedClientEnrollmentText, enrollmentSelectedValueC: enrollmentSelectedValue,
+               MasterReference:Convert.ToInt32(MasterReference.Value.Equals("")?-1: Convert.ToInt32(MasterReference.Value)), HFDifferentClient:hfDifferentClient.Value,HFClientId:Convert.ToInt32(hfClientId.Value),
+               HFClientProgramEnrollmentId:Convert.ToInt32(hfClientProgramEnrollmentId.Value.Equals("")?-1: Convert.ToInt32(hfClientProgramEnrollmentId.Value)));
+
+
+
+            if (DataTableHolidayMeeting.Rows.Count > 0 && ForceSave.Value != "true")
+            {
+                GridViewHolidays.DataSource = DataTableHolidayMeeting;
+                GridViewHolidays.DataBind();
+                ForceSaveRecurrence.Value = "true";
+                calenarMeetingXML.InnerText = calendarFields;
+                calendarMeetingReccurrence.InnerText = reccurenceXML;
+            }
+            else
+            {
+                DataSetMeetingTable = _meetingsBA.ModifyMeeting(int.Parse(MeetingId.Value), calendars, DropDownLocations.SelectedValue.Equals("") ? -1 : int.Parse(DropDownLocations.SelectedValue),
+              DropDownMeetingTypes.SelectedValue.Equals("") ? -1 : int.Parse(DropDownMeetingTypes.SelectedValue),
+              DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingStartDate.Text, TextBoxMeetingStartTime.Value)),
+              DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingEndDate.Text, TextBoxMeetingEndTime.Value)),
+              TextBoxTitle.Text,
+               ((SitePrinciple)HttpContext.Current.Session["UserContext"]).DataRowUser["Username"].ToString(),
+               DropDownListColor.SelectedValue, TextBoxComments.Text,TextBoxTravelNotes.Text, clientId, enrollmentId,
+               ForceSave.Value.Equals("true") ? true : false, Reccurrences: Recurrences(DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingStartDate.Text, TextBoxMeetingStartTime.Value)),
+              DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingEndDate.Text, TextBoxMeetingEndTime.Value))
+              ), updateReccurrences: bool.Parse(DropDownListReccurringUpdateOption.SelectedValue),counter: Recurrences(DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingStartDate.Text, TextBoxMeetingStartTime.Value)),
+              DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingEndDate.Text, TextBoxMeetingEndTime.Value))).Count);
+
+
+                LoadMeetings();
+                RegisterScripts();
+            }
+        }
+        catch (Exception Ex)
+        {
+
+            if (Ex is ValidationException)
+            {
+                _errorLogging.LogError(Ex, Request.UrlReferrer.LocalPath);
+                throw new HttpException(((ValidationException)Ex).CanConinue ? 430 : 431, Ex.Message);
+            }
+            
+            else
+                throw Ex;
+        }
+        finally
+        {
+            
+        }
+    }
+
+    private List<DateTime> RecurrenceDays()
+    {
+        DateTime _StartDate = DateTime.Parse(string.Format("{0} {1}", TextBoxMeetingStartDate.Text, TextBoxMeetingStartTime.Value));
+        DateTime _EndDate = DateTime.Parse(string.Format("{0} {1}", TextBoxRecurrenceEndDate.Text, TextBoxMeetingStartTime.Value));
+
+        Dictionary<DateTime, string> days = new Dictionary<DateTime, string>();
+
+        while (_StartDate.Date != _EndDate.Date)
+        {
+            days.Add(_StartDate, _StartDate.DayOfWeek.ToString());
+            _StartDate = _StartDate.AddDays(1);
+        }
+        days.Add(_EndDate, _EndDate.DayOfWeek.ToString());
+
+
+        List<string> SelectedDays = new List<string>();
+        foreach (var control in RepeatDays.Controls)
+        {
+            if (control is CheckBox)
+            {
+                if (((CheckBox)control).ID.Contains("CheckBox_") && ((CheckBox)control).Checked == true)
+                {
+                    SelectedDays.Add(((CheckBox)control).ID.Replace("CheckBox_", ""));
+                }
+            }
+        }
+
+        var result = days.Where(x => SelectedDays.Contains(x.Value))
+                       .ToDictionary(x => x.Key, x => x.Value);
+
+        if (result.Count == 0)
+            throw new Exception("No reccurences found");
+        return result.Keys.ToList();
+
+    }
+    private void DeleteMeeting()
+    {
+
+        ClientsObject = new Client();
+        _Clientobject = new Clients();
+        Meetings _meetingsBA = new Meetings();
+        string DeletedMeetingXML = null;
+        DataSetDeletedMeetingTable = new DataSet();
+        try
+        {
+            _meetingsBA.DeleteMeeting(int.Parse(MeetingId.Value),
+                ((SitePrinciple)HttpContext.Current.Session["UserContext"]).DataRowUser["Username"].ToString(),
+                updateReccurrences: bool.Parse(DropDownListReccurringUpdateOption.SelectedValue));
+            string MeetingKeyId = null;
+            MeetingKeyId = Convert.ToString(int.Parse(MeetingId.Value));
+            DataSetDeletedMeetingTable = _Clientobject.GetTableSpecificRecord("CalendarMeetings", -1, MeetingKeyId);
+            DataSetDeletedMeetingTable.Tables[0].TableName = "ClientMeeting";
+            LoadMeetings();
+        }
+        catch (Exception Ex)
+        {
+            _errorLogging.LogError(Ex, Request.UrlReferrer.LocalPath);
+            if (Ex is ValidationException)
+                throw new HttpException(((ValidationException)Ex).CanConinue ? 430 : 431, Ex.Message);
+            else
+                throw Ex;
+        }
+    }
+
+    private void ValidateMeetingDetails()
+    {
+        if (ListBoxCalenders.GetSelectedIndices().Length == 0)
+        {
+            throw new Exception("Please select a Calendar.");
+        }
+        if (string.IsNullOrEmpty(TextBoxTitle.Text))
+        {
+            throw new Exception("Please enter a meeting description in the Title field.");
+        }
+        if (string.IsNullOrEmpty(TextBoxMeetingStartDate.Text) || string.IsNullOrEmpty(TextBoxMeetingEndDate.Text))
+        {
+            throw new Exception("Invalid meeting date.");
+        }
+        else if (string.IsNullOrEmpty(TextBoxMeetingStartTime.Value))
+        {
+            throw new Exception("Invalid meeting start time.");
+        }
+        else if (string.IsNullOrEmpty(TextBoxMeetingEndTime.Value))
+        {
+            throw new Exception("Invalid meeting end time.");
+        }
+        else if (radioDayOfMonth.Checked==true)
+        {
+            if(CheckBox_First.Checked != true&& CheckBox_Second.Checked!=true&& CheckBox_Third.Checked!=true&& CheckBox_Fourth.Checked!=true)
+                throw new Exception("Atleast one occurance is required to selected.");
+        }
+        else if (GetFormattedDateTime(TextBoxMeetingStartDate.Text, TextBoxMeetingStartTime.Value) >= GetFormattedDateTime(TextBoxMeetingEndDate.Text, TextBoxMeetingEndTime.Value))
+        {
+            throw new Exception("End time should be greater than start time.");
+        }
+        if (CheckBoxRecurrence.Checked == true && TextBoxRecurrenceEndDate.Text == string.Empty)
+        {
+            throw new Exception("Set a recurrence end date");
+        }
+    }
+
+    private void ClearFields()
+    {
+        TextBoxTitle.Text = string.Empty;
+        TextBoxMeetingStartTime.Value = string.Empty;
+        TextBoxMeetingEndTime.Value = string.Empty;
+        TextBoxMeetingStartDate.Text = string.Empty;
+        TextBoxMeetingEndDate.Text = string.Empty;
+        ForceSave.Value = "false";
+    }
+    private void ClearFieldsMeetings()
+    {
+        TextBoxTitle.Text = string.Empty;
+        TextBoxMeetingStartTime.Value = string.Empty;
+        TextBoxMeetingEndTime.Value = string.Empty;
+        TextBoxMeetingStartDate.Text = string.Empty;
+        TextBoxMeetingEndDate.Text = string.Empty;
+        ForceSave.Value = "false";
+        calenarMeetingXML.InnerText = string.Empty;
+        calendarMeetingReccurrence.InnerText = string.Empty;
+
+
+    }
+
+    private List<SerializableAppointment> Recurrences(DateTime meetingStart, DateTime meetingEnd)
+    {
+        List<SerializableAppointment> appointments = new List<SerializableAppointment>();
+
+        if (CheckBoxRecurrence.Checked)
+        {
+            DateTime reccurrenceStart = meetingStart;
+            DateTime reccurrenceEnd = DateTime.Parse(TextBoxRecurrenceEndDate.Text).AddHours(meetingStart.Hour);
+            reccurrenceEnd = reccurrenceEnd.AddMinutes(meetingStart.Minute);
+            reccurrenceEnd = reccurrenceEnd.AddSeconds(meetingStart.Second);
+            int interval = int.Parse(DropDownListFrequency.SelectedValue);
+
+            if (DropDownListRepeat.SelectedValue.Equals("Daily"))
+            {
+                List<DateTime> SelectedDays = RecurrenceDays();
+
+                foreach (DateTime date in SelectedDays)
+                {
+                    appointments.Add(new SerializableAppointment { Start = date, End = date.Add(meetingEnd - meetingStart) });
+                }
+
+            }
+            else if (DropDownListRepeat.SelectedValue.Equals("Weekly"))
+            {
+                while (reccurrenceStart <= reccurrenceEnd)
+                {
+                    appointments.Add(new SerializableAppointment { Start = reccurrenceStart, End = reccurrenceStart.Add(meetingEnd - meetingStart) });
+                    reccurrenceStart = reccurrenceStart.AddDays(7 * interval);
+                }
+            }
+            else if (DropDownListRepeat.SelectedValue.Equals("Monthly"))
+            {
+                while (reccurrenceStart <= reccurrenceEnd)
+                {
+                    if(radioDayOfMonth.Checked)
+                    {
+                        string strDay = reccurrenceStart.DayOfWeek.ToString(); 
+                        if (CheckBox_First.Checked || CheckBox_Second.Checked || CheckBox_Third.Checked || CheckBox_Fourth.Checked)
+                        {
+                            
+                            if(strDay == reccurrenceStart.DayOfWeek.ToString() )
+                            {
+                                interval = 7;
+                                if (CheckBox_First.Checked && (reccurrenceStart.Day-1) / 7 == 0)
+                                {
+                                    appointments.Add(new SerializableAppointment { Start = reccurrenceStart, End = reccurrenceStart.Add(meetingEnd - meetingStart) });
+                                    reccurrenceStart = reccurrenceStart.AddDays(1 * interval);
+                                }
+                                if (CheckBox_Second.Checked && (reccurrenceStart.Day - 1) / 7 == 1)
+                                {
+                                    appointments.Add(new SerializableAppointment { Start = reccurrenceStart, End = reccurrenceStart.Add(meetingEnd - meetingStart) });
+                                    reccurrenceStart = reccurrenceStart.AddDays(1 * interval);
+                                }
+                                if (CheckBox_Third.Checked && (reccurrenceStart.Day - 1) / 7 == 2)
+                                {
+                                    appointments.Add(new SerializableAppointment { Start = reccurrenceStart, End = reccurrenceStart.Add(meetingEnd - meetingStart) });
+                                    reccurrenceStart = reccurrenceStart.AddDays(1 * interval);
+                                }
+                                if (CheckBox_Fourth.Checked && (reccurrenceStart.Day - 1) / 7 == 3)
+                                {
+                                    appointments.Add(new SerializableAppointment { Start = reccurrenceStart, End = reccurrenceStart.Add(meetingEnd - meetingStart) });
+                                    reccurrenceStart = reccurrenceStart.AddDays(1 * interval);
+                                }
+                                else
+                                    reccurrenceStart = reccurrenceStart.AddDays(7);
+
+                            }
+                            
+                        }reccurrenceStart = reccurrenceStart.AddMonths(1 * interval);
+                    }
+                    else
+                    {
+                        appointments.Add(new SerializableAppointment { Start = reccurrenceStart, End = reccurrenceStart.Add(meetingEnd - meetingStart) });
+                        reccurrenceStart = reccurrenceStart.AddMonths(1 * interval);
+                    }
+                    
+                }
+            }
+
+        }
+
+        return appointments;
+    }
+
+    protected void RadSchedulerCalendar_AppointmentDataBound(object sender, SchedulerEventArgs e)
+    {
+        try
+        {
+            DataRow _row = ((DataRow)((Appointment)e.Appointment.DataItem).DataItem);
+            string _type = _row["Type"].ToString();
+
+            if (_row["Color"] != DBNull.Value)
+                e.Appointment.Attributes.Add("OriginalColor", _row["Color"].ToString());
+
+            if ((_row["Color"] == DBNull.Value || _row["Color"].ToString().Equals(string.Empty))
+                && _row["CalendarColor"] != DBNull.Value)
+                e.Appointment.Attributes.Add("OriginalColor", _row["CalendarColor"].ToString());
+
+            if (RadSchedulerCalendar.SelectedView == SchedulerViewType.AgendaView)
+            {
+                e.Appointment.AllowEdit = e.Appointment.AllowDelete = false;
+                e.Appointment.CssClass = "rsCategoryBlue";
+            }
+            else
+            {
+                if (_type.Equals("Meeting"))
+                {
+                    e.Appointment.AllowEdit = false;
+                    if (_row["Color"] != DBNull.Value)
+                        e.Appointment.CssClass = _row["Color"].ToString();
+                    if ((_row["Color"] == DBNull.Value || _row["Color"].ToString().Equals(string.Empty))
+                        && _row["CalendarColor"] != DBNull.Value)
+                        e.Appointment.CssClass = _row["CalendarColor"].ToString();
+
+                }
+                else if (_type.Equals("TreatmentGroup"))
+                {
+                    e.Appointment.AllowEdit = e.Appointment.AllowDelete = false;
+                    e.Appointment.CssClass = "rsCategoryGreen";
+
+                }
+                else if (_type.Equals("Leave"))
+                {
+                    e.Appointment.AllowEdit = e.Appointment.AllowDelete = false;
+                    e.Appointment.CssClass = "rsCategoryOrange";
+                }
+                else if (_type.Equals("Assessment"))
+                {
+                    e.Appointment.AllowEdit = e.Appointment.AllowDelete = false;
+                }
+
+                else if (_type.Equals("Holiday"))
+                {
+                    e.Appointment.AllowEdit = e.Appointment.AllowDelete = false;
+                    e.Appointment.CssClass = "rsCategoryBlue";
+                }
+            }
+        }
+       catch(Exception Ex)
+        {
+            _errorLogging.LogError(Ex, Request.UrlReferrer.LocalPath);
+        }
+    }
+
+    protected void RadSchedulerCalendar_AppointmentUpdate(object sender, AppointmentUpdateEventArgs e)
+    {
+
+    }
+
+    protected void DeleteButton_Click(object sender, EventArgs e)
+    {
+        DeleteMeeting();
+        ClearFields();
+        RegisterScripts();
+    }
+
+    protected void RadSchedulerCalendar_NavigationCommand(object sender, SchedulerNavigationCommandEventArgs e)
+    {
+        switch (e.Command)
+        {
+            case SchedulerNavigationCommand.SwitchToDayView:
+                SetAppointmentColors(false);
+                hfCalenderMode.Value = "Day";
+                break;
+            case SchedulerNavigationCommand.SwitchToMonthView:
+                SetAppointmentColors(false);
+                hfCalenderMode.Value = "Month";
+                break;
+            case SchedulerNavigationCommand.SwitchToWeekView:
+                SetAppointmentColors(false);
+                hfCalenderMode.Value = "Week";
+                break;
+            case SchedulerNavigationCommand.SwitchToAgendaView:
+                SetAppointmentColors(true);
+                hfCalenderMode.Value = "Agenda";
+                break;
+        }
+        RegisterScripts();
+    }
+
+    private void SetAppointmentColors(bool isAgendaView)
+    {
+        foreach (Appointment a in RadSchedulerCalendar.Appointments)
+        {
+            a.CssClass = isAgendaView ? "rsCategoryBlue" : a.Attributes["OriginalColor"].ToString();
+        }
+    }
+
+    protected void ButtonExprt_Click(object sender, EventArgs e)
+    {
+        RadSchedulerCalendar.ExportToPdf();
+        RadSchedulerCalendar.ExportSettings.Pdf.PageTitle = "Meeting Schedule";
+        RadSchedulerCalendar.ExportSettings.Pdf.AllowPaging = dropdownPaging.SelectedValue == "Yes" ? false : true;
+        RadSchedulerCalendar.ExportSettings.Pdf.PaperOrientation = dropdownOrientation.SelectedValue == "Landscape" ? SchedulerPaperOrientation.Landscape : SchedulerPaperOrientation.Portrait;
+        RadSchedulerCalendar.ExportSettings.OpenInNewWindow = true;
+    }
+
+    private DateTime GetFormattedDateTime(string date, string time)
+    {
+        string[] splitTime = time.Split(':');
+        int hour, minutes;
+
+        hour = int.Parse(splitTime[0].ToString());
+
+        if (splitTime[1].Length > 2)
+        {
+            if ((splitTime[1].ToLower().Contains("pm") && hour != 12))
+            {
+                hour += 12;
+            }
+            else if ((splitTime[1].ToLower().Contains("am") && hour == 12))
+            {
+                hour = 0;
+            }
+            minutes = int.Parse(splitTime[1].Substring(0, 2));
+        }
+        else
+        {
+            minutes = int.Parse(splitTime[1].ToString());
+        }
+
+        return DateTime.Parse(date).Add(TimeSpan.Parse(string.Format("{0}:{1}", hour.ToString(), minutes.ToString())));
+    }
+
+    protected void ListBoxCalenders_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        ListBox box = sender as ListBox;
+        foreach (int index in box.GetSelectedIndices().ToList())
+        {
+            if (box.Items[index].Text == "Select multiple...")
+            {
+                box.Items.RemoveAt(0);
+                box.Items.RemoveAt(0);
+                break;
+            }
+        }
+    }
+
+    private DataTable ValidateCalendarHolidays(List<int> calendars,DateTime startTime,DateTime EndTime,bool recurrenceMeeting=false,int ClientId=-1,int MeetingId=-1)
+    {
+        DataTable DataTableHolidays = null;
+        try
+        {
+            Meetings _meetingsBA = new Meetings();
+            DataTableHolidays = _meetingsBA.ValidateMeetingDetails(calendars, int.Parse(((SitePrinciple)Session["UserContext"]).DataRowUser["DefaultCompanyId"].ToString()), startTime, EndTime, recurrenceMeeting, ClientId, MeetingId);
+            if (DataTableHolidays.Rows.Count > 0 && ForceSave.Value=="false")
+            {
+                RegisterScriptsModal();
+            }
+        }
+        catch (Exception Ex)
+        {
+            _errorLogging.LogError(Ex, Request.UrlReferrer.LocalPath);
+            throw Ex;
+        }
+        finally
+        {
+
+        }
+        
+        return DataTableHolidays;
+    }
+    protected void GridViewHolidays_RowDataBound(object sender, GridViewRowEventArgs e)
+    {
+        try
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+      
+                if (e.Row.Cells[5].Text == "Y")
+                {
+                    SaveValidateMeetings.Visible = false;
+                }
+                else
+                {
+                    SaveValidateMeetings.Visible = true;
+                }
+            }
+        }
+        catch (Exception Ex)
+        {
+            _errorLogging.LogError(Ex, Request.UrlReferrer.LocalPath);
+        }
+    }
+
+
+    private void RegisterScriptsModal()
+    {
+        string script = " $('#DivHolidays').modal('show');  $('#DivMeeting').modal('hide');";
+        ScriptManager.RegisterStartupScript(this, this.GetType(), "test", script, true);
+    }
+    private void RegisterScriptsCloseModal()
+    {
+        string script = " $('#DivHolidays').modal('hide'); $('#DivMeeting').modal('hide');";
+        ScriptManager.RegisterStartupScript(this, this.GetType(), "test", script, true);
+    }
+    private string GetCalendarXML(int meetingId, List<int> calendars, int? locationId, int? meetingTypeId, DateTime start, DateTime end, string title,
+           string user, string color, string comments, string travelNotes, int clientId = -1, int clientEnrollmentId = -1, bool forceSubmit = false,
+            List<SerializableAppointment> Reccurrences = null, bool updateReccurrences = false, bool IsRecurrenceMeeting = false,
+            string selectedClientEnrollmentC = "", int enrollmentSelectedValueC = -1, int MasterReference = -1, string HFDifferentClient = "", int HFClientId = -1, int HFClientProgramEnrollmentId = -1)
+    {
+        string joined = string.Join(",", calendars);
+        string CalendarMeetingXML="";
+        try
+        {
+            Meetings _meetingsBA = new Meetings();
+            string xmlReccurrence = _meetingsBA.GetReccurrenceXML(Reccurrences);
+            XElement xml = new XElement("CalendarMeetings",
+                new XElement("MeetingId", meetingId.ToString()),
+                new XElement("Calendars", joined),
+                new XElement("LocationId", locationId),
+                new XElement("MeetingTypeId", meetingTypeId),
+                new XElement("Start", start),
+                new XElement("End", end),
+                new XElement("Title", title),
+                new XElement("Color", color),
+                new XElement("Comments", comments),
+                new XElement("TravelNotes", travelNotes),
+                new XElement("ClientId", clientId),
+                new XElement("ClientEnrollmentId", clientEnrollmentId),
+                new XElement("forceSubmit", forceSubmit),
+                new XElement("Reccurrences", xmlReccurrence),
+                new XElement("updateReccurrences", updateReccurrences),
+                new XElement("IsReccurrence", IsRecurrenceMeeting),
+                new XElement("SelectedClientEnrollment", selectedClientEnrollmentC),
+                new XElement("EnrollmentSelectedValue", enrollmentSelectedValueC),
+                new XElement("MasterReference", MasterReference),
+                new XElement("HFDifferentClient", HFDifferentClient),
+                new XElement("HFClientId", HFClientId),
+                new XElement("HFClientProgramEnrollmentId", HFClientProgramEnrollmentId)
+
+            );
+            CalendarMeetingXML = xml.ToString();
+
+        }
+        catch(Exception Ex)
+        {
+            _errorLogging.LogError(Ex, Request.UrlReferrer.LocalPath);
+        }
+        finally
+        {
+
+        }
+        return CalendarMeetingXML;
+    }
+    private void SaveMeetingWithValidationHolidays()
+    {
+        string xml = calenarMeetingXML.InnerText;
+        string MeetingId = "", CalendarId = "", LocationId = "", MeetingTypeId = "", Start = "", End = "", Title = "",
+            Color = "", Comments = "", ClientId = "", ClientEnrollmentId = "", forceSubmit = "", Reccurrences = "", updateReccurrences = "",
+            IsReccurrence = "",selectedClientDeatil="",TravelNotes="";
+            
+        try
+        {
+            string userName = ((SitePrinciple)HttpContext.Current.Session["UserContext"]).DataRowUser["Username"].ToString();
+
+            Meetings _meetingsBA = new Meetings();
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xml);
+            XmlNodeList xnList = xmlDoc.SelectNodes("/CalendarMeetings");
+            foreach (XmlNode xn in xnList)
+            {
+                 MeetingId = xn["MeetingId"].InnerText;
+                 CalendarId = xn["Calendars"].InnerText;
+                 LocationId = xn["LocationId"].InnerText;
+                 MeetingTypeId = xn["MeetingTypeId"].InnerText;
+                 Start = xn["Start"].InnerText;
+                 End = xn["End"].InnerText;
+                 Title = xn["Title"].InnerText;
+                 Color = xn["Color"].InnerText;
+                 Comments = xn["Comments"].InnerText;
+                 TravelNotes = xn["TravelNotes"].InnerText;
+                ClientId = xn["ClientId"].InnerText;
+                 ClientEnrollmentId = xn["ClientEnrollmentId"].InnerText;
+                 forceSubmit = xn["forceSubmit"].InnerText;
+                 Reccurrences = xn["Reccurrences"].InnerText;
+                 updateReccurrences = xn["updateReccurrences"].InnerText;
+                IsReccurrence = xn["IsReccurrence"].InnerText;
+                selectedClientDeatil = xn["IsReccurrence"].InnerText; 
+            }
+            List<int> Calendar = CalendarId.Split(',').Select(int.Parse).ToList();
+            DataSetMeetingTable = _meetingsBA.ModifyMeetingValidated(Convert.ToInt32(MeetingId), Calendar, Convert.ToInt32(LocationId), Convert.ToInt32(MeetingTypeId),
+                                   Convert.ToDateTime(Start), Convert.ToDateTime(End), Title, userName, Color, Comments,TravelNotes, Convert.ToInt32(ClientId), Convert.ToInt32(ClientEnrollmentId),
+                                   Convert.ToBoolean(forceSubmit), Reccurrences, Convert.ToBoolean(updateReccurrences));
+
+            LoadMeetings();
+            RegisterScripts();
+        }
+        catch (Exception Ex)
+        {
+            _errorLogging.LogError(Ex, Request.UrlReferrer.LocalPath);
+            if (Ex is ValidationException)
+                throw new HttpException(((ValidationException)Ex).CanConinue ? 430 : 431, Ex.Message);
+            else
+              throw Ex;
+        }
+        
+    }
+
+    private string GetRecurrenceXML()
+    {
+        string XmlValues = string.Empty;
+        try
+        {
+            bool checkBoxRecurrence = CheckBoxRecurrence.Checked ? true : false;
+            string RrecurrenceEnd = Convert.ToDateTime(TextBoxRecurrenceEndDate.Text).ToShortDateString();
+            string Repeat = DropDownListRepeat.SelectedValue.ToString();
+            if(Repeat== "Daily")
+            {
+                bool checkbox_Sun = CheckBox_Sunday.Checked ? true : false;
+                bool checkbox_Mon = CheckBox_Monday.Checked ? true : false;
+                bool checkbox_Tue = CheckBox_Tuesday.Checked ? true : false;
+                bool checkbox_Wed = CheckBox_Wednesday.Checked ? true : false;
+                bool checkbox_Thu = CheckBox_Thursday.Checked ? true : false;
+                bool checkbox_Fri = CheckBox_Friday.Checked ? true : false;
+                bool checkbox_Sat = CheckBox_Saturday.Checked ? true : false;
+
+                XElement xmlRecurrence = new XElement("Recurrences",
+              new XElement("CheckBoxRecurrence", checkBoxRecurrence),
+              new XElement("RrecurrenceEnd", RrecurrenceEnd),
+              new XElement("Repeat", Repeat),
+              new XElement("checkbox_Sun", checkbox_Sun),
+              new XElement("checkbox_Mon", checkbox_Mon),
+              new XElement("checkbox_Tue", checkbox_Tue),
+              new XElement("checkbox_Wed", checkbox_Wed),
+              new XElement("checkbox_Thu", checkbox_Thu),
+              new XElement("checkbox_Fri", checkbox_Fri),
+              new XElement("checkbox_Sat", checkbox_Sat)
+              );
+                XmlValues = xmlRecurrence.ToString();
+            }
+            else if(Repeat== "Weekly")
+            {
+                string WeeklyText = DropDownListFrequency.SelectedValue.ToString();
+                XElement xmlRecurrence = new XElement("Recurrences",
+                 new XElement("CheckBoxRecurrence", checkBoxRecurrence),
+                 new XElement("RrecurrenceEnd", RrecurrenceEnd),
+                 new XElement("Repeat", Repeat),
+                 new XElement("WeeklyText", WeeklyText)
+                 );
+                XmlValues = xmlRecurrence.ToString();
+            }
+            else if (Repeat == "Monthly")
+            {
+                bool radioButtonMonthly = radioMonthly.Checked ? true:false;
+                bool radioButtonDayOfMonth = radioDayOfMonth.Checked ? true : false;
+                string LabelMonthly = labelMonthly.Value;
+                string LabelWeekly = labelWeekly.Value;
+
+                bool checkBox_First = CheckBox_First.Checked ? true:false;
+                bool checkBox_Second = CheckBox_Second.Checked ? true : false;
+                bool checkBox_Third = CheckBox_Third.Checked ? true : false;
+                bool checkBox_Fourth = CheckBox_Fourth.Checked ? true : false;
+                XElement xmlRecurrence = new XElement("Recurrences",
+                 new XElement("CheckBoxRecurrence", checkBoxRecurrence),
+                 new XElement("RrecurrenceEnd", RrecurrenceEnd),
+                 new XElement("Repeat", Repeat),
+                 new XElement("radioButtonMonthly", radioButtonMonthly),
+                 new XElement("radioButtonDayOfMonth", radioButtonDayOfMonth),
+                 new XElement("LabelMonthly", LabelMonthly),
+                 new XElement("LabelWeekly", LabelWeekly),
+                 new XElement("checkBox_First", checkBox_First),
+                 new XElement("checkBox_Second", checkBox_Second),
+                 new XElement("checkBox_Third", checkBox_Third),
+                 new XElement("checkBox_Fourth", checkBox_Fourth)
+                 );
+                XmlValues = xmlRecurrence.ToString();
+            }
+            else
+            {
+                XElement xmlRecurrence = new XElement("Recurrences",
+               new XElement("CheckBoxRecurrence", checkBoxRecurrence),
+               new XElement("RrecurrenceEnd", RrecurrenceEnd),
+               new XElement("Repeat", Repeat)
+               );
+                XmlValues = xmlRecurrence.ToString();
+            }
+           
+        }
+        catch(Exception Ex)
+        {
+            _errorLogging.LogError(Ex, Request.UrlReferrer.LocalPath);
+        }
+        return XmlValues;
+    }
+
+}

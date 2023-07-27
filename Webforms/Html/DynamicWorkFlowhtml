@@ -1,0 +1,260 @@
+<%@ Page Language="C#" MasterPageFile="~/AdminLayout.master" AutoEventWireup="true" Inherits="Admin_WorkFlowDetails" Title="Untitled Page" Codebehind="WorkFlowDetails.aspx.cs" %>
+
+<%@ MasterType VirtualPath="~/AdminLayout.master" %>
+<asp:Content ID="xyzsdexyzsdeContent2" ContentPlaceHolderID="xyzsdexyzsdehead" runat="Server">
+</asp:Content>
+<asp:Content ID="xyzsdexyzsdeContent1" ContentPlaceHolderID="xyzsdexyzsdeMainContentPlaceHolder" runat="Server">
+    <script type="text/javascript">
+        var _WorkFlowId =<%=_WorkFlowId %>;
+        var _WorkFlowEventId =<%=_WorkFlowEventId %>;
+        var _GridViewStepCriteriaControl = '<%=GridViewStepCriteria.ClientID%>';
+        var _GridViewWorkFlowStepsControl = '<%=GridViewWorkFlowSteps.ClientID%>';
+        var _ListBoxOldValue = '<%=ListBoxOldValue.ClientID %>';
+        var _ListBoxNewValue = '<%=ListBoxNewValue.ClientID %>';
+        var _ClientScreen = false;
+    </script>
+    
+    <script type="text/javascript" src="../App_Themes/JS/WorkFlow.js?v=<% =ConfigurationManager.AppSettings["JSVersion"].ToString() %>">    </script>
+
+    <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading">WorkFlow Criteria</div>
+        <div class="panel-body">
+            <asp:GridView ID="xyzsdexyzsdeGridViewStepCriteria" EnableViewState="false" runat="server" AutoGenerateColumns="false"
+                Visible="false" OnRowDataBound="GridViewStepCriteria_RowDataBound" CssClass="table table-bordered smart-form workflow_criteria"
+                CellSpacing="0">
+                <Columns>
+                    <asp:BoundField DataField="DisplayName" HeaderText="Criteria" ItemStyle-HorizontalAlign="Left" ItemStyle-Width="30%" />
+                    <asp:BoundField DataField="DataType" HeaderStyle-CssClass="HiddenDisplay" ItemStyle-CssClass="HiddenDisplay" />
+                    <asp:TemplateField HeaderText="Operator" ItemStyle-HorizontalAlign="center" ItemStyle-Width="15%"></asp:TemplateField>
+                    <asp:TemplateField HeaderText="Value" ItemStyle-HorizontalAlign="left" ItemStyle-Width="55%"></asp:TemplateField>
+                    <asp:BoundField DataField="Value" HeaderStyle-CssClass="HiddenDisplay" ItemStyle-CssClass="HiddenDisplay" />
+                    <asp:BoundField DataField="ColumnName" HeaderStyle-CssClass="HiddenDisplay" ItemStyle-CssClass="HiddenDisplay" />
+                </Columns>
+            </asp:GridView>
+            <div style="margin-top: 10px">
+                <table ID="xyzsdexyzsdeDivWorkFlowDetails" class="table table-bordered smart-form">
+                    <tr class="gridviewrow1">
+                        <td style="width:30%">
+                            <asp:Literal runat="server" ID="xyzsdexyzsdechangeDesc1"></asp:Literal> (Old Value):
+                        </td>
+                        <td style="width:15%; text-align:center;">
+                            <label class="select">
+                                <select><option>=</option></select><i></i>
+                            </label>
+                        </td>
+                        <td style="width:55%">
+                            <label class="select select-multiple">
+                                <asp:ListBox runat="server" ID="xyzsdexyzsdeListBoxOldValue">
+                                </asp:ListBox>
+                            </label>
+                            <a href='Javascript:ClearList(_ListBoxOldValue)'>Clear</a>
+                        </td>
+                    </tr>
+                    <tr class="gridviewrow2">
+                        <td>
+                            <asp:Literal runat="server" ID="xyzsdexyzsdechangeDesc2"></asp:Literal> (New Value):
+                        </td>
+                        <td style="width:15%; text-align:center;">
+                            <label class="select">
+                                <select><option>=</option></select><i></i>
+                            </label>
+                        </td>
+                        <td style="width:55%">
+                            <label class="select select-multiple">
+                                <asp:ListBox runat="server" ID="xyzsdexyzsdeListBoxNewValue"></asp:ListBox>
+                            </label>
+                             <a href='Javascript:ClearList(_ListBoxNewValue)'>Clear</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <table class="table">
+                <tr>
+                    <td style="text-align:right; padding-right: 5px">
+                        <input type='button' ID="xyzsdexyzsdeButton2" value='Update Criteria' onclick='GenerateStatement()'
+                            class="btn btn-primary btn-xs button" />
+                    </td>
+                    <td style="text-align:left; padding-left: 5px">
+                        <input type="reset" value='Cancel Criteria' class="btn btn-default btn-xs button" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+
+  
+    <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading">Action Groups</div>
+        <div class="panel-body">
+            <asp:GridView ID="xyzsdexyzsdeGridViewWorkFlowSteps" EnableViewState="false" runat="server" AutoGenerateColumns="False"
+                OnRowDataBound="GridViewWorkFlowSteps_RowDataBound" CssClass="table table-bordered smart-form workflow_criteria"
+                CellSpacing="0">
+                <Columns>
+                    <asp:TemplateField HeaderText="Action" ItemStyle-HorizontalAlign="Left" ItemStyle-CssClass="twoAction">
+                        <ItemTemplate>
+                            <img src="../App_Themes/Images/<%# DataBinder.Eval(Container.DataItem,"DeleteImage")%>"
+                                style="cursor:pointer" title="<%# DataBinder.Eval(Container.DataItem,"DeleteImageTitle")%>"
+                                onclick="DeleteWorkFlowStep(this,<%# DataBinder.Eval(Container.DataItem,"WorkFlowStepId") %>,<%# GridViewWorkFlowSteps.Rows.Count%>,'<%#GridViewWorkFlowSteps.ClientID%>')" />
+                            &nbsp;&nbsp; <a href="javascript:ManageActions(this,<%# DataBinder.Eval(Container.DataItem,"WorkFlowStepId") %>,<%# GridViewWorkFlowSteps.Rows.Count%>,'<%#GridViewWorkFlowSteps.ClientID%>')">Edit</a>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:TemplateField ItemStyle-CssClass="HiddenDisplay" HeaderStyle-CssClass="HiddenDisplay">
+                        <ItemTemplate>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:TemplateField HeaderText="Action Group Description" ItemStyle-Wrap="false" HeaderStyle-Wrap="false"
+                        ItemStyle-HorizontalAlign="Left">
+                        <ItemTemplate>
+                            <a href="Javascript:EditWorkFlowStep(<%# DataBinder.Eval(Container.DataItem,"WorkFlowStepId") %>,<%# GridViewWorkFlowSteps.Rows.Count%>,'<%#GridViewWorkFlowSteps.ClientID%>')">
+                                <%# DataBinder.Eval(Container.DataItem, "StepDescription")%>
+                            </a>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:BoundField DataField="NumberOfActions" HeaderText="Number Of Actions" ItemStyle-Wrap="false"
+                        HeaderStyle-Wrap="false" ItemStyle-HorizontalAlign="Left" />
+                </Columns>
+            </asp:GridView>
+        </div>
+    </div>
+    <div class="modal fade" ID="xyzsdexyzsdeDivWorkFlowStepsInfo">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Modify Action Group Name -
+                <asp:Literal runat="server" ID="xyzsdexyzsdeworkflowTitle"></asp:Literal>
+                    </h4>
+                    <input type="hidden" ID="xyzsdexyzsdeTextBoxWorkFlowStepId" name="TextBoxWorkFlowStepId" />
+                </div>
+                <div class="modal-body">
+                    <table class="table smart-form">
+                        <tr>
+                            <td>Action Group Name:
+                            </td>
+                            <td colspan="2">
+                                <label class="input">
+                                    <input type="text" ID="xyzsdexyzsdeTextBoxStepName" name="TextBoxStepName" class="req_field">
+                                </label>
+                            </td>
+                        </tr>
+                        <tr class="Hidden">
+                            <td>&nbsp;
+                            </td>
+                            <td>Recurring :
+                            </td>
+                            <td colspan="2">
+                                <input type="checkbox" ID="xyzsdexyzsdeCheckBoxRecurring" name="CheckBoxRecurring" />
+                            </td>
+                        </tr>
+                        <tr class="Hidden">
+                            <td>&nbsp;
+                            </td>
+                            <td>Execution After :
+                            </td>
+                            <td colspan="2">
+                                <input type="text" ID="xyzsdexyzsdeTextBoxNumberOfDays" name="TextBoxNumberOfDays" value="0" />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    
+                    <button ID="xyzsdexyzsdeButtonModifyStep"  type="button" class="btn btn-primary btn-xs button" onclick="SaveStep()">Insert</button>
+                    <button type="button" class="btn btn-default btn-xs button" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!-- /.modal -->
+
+    <div style="text-align: center; margin-top: 8px">
+        <table cellpadding="0" cellspacing="0" align="center">
+            <tr>
+                <td style="padding-right: 5px">
+                    <input class="btn btn-default btn-xs button" type="button" value="Back" onclick="location.href='DesignWorkFlow.aspx'" class="detailsbutton" />
+                </td>
+                <td style="padding-right: 5px">
+                    <input type="button" ID="xyzsdexyzsdeButtonUpdateStep" value="Add Group" onclick="AddStep();return false;"
+                        class="btn btn-primary btn-xs button" />
+                </td>
+            </tr>
+        </table>
+    </div>
+    <br />
+    <div class="modal fade" ID="xyzsdexyzsdeDivWorkFlowStepDetails">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Actions -
+                <asp:Literal runat="server" ID="xyzsdexyzsdeworkflowTItleTwo"></asp:Literal>
+
+                    </h4>
+                    <input type="hidden" ID="xyzsdexyzsdeHidden1" name="" />
+                </div>
+                <div class="modal-body add-scroll">
+                    <div ID="xyzsdexyzsdeDivWorkFlowStepActions" class="Hidden" align="center">
+                        <table class="table smart-form">
+                            <tr>
+                                <td style="width:25%;">Action:
+                                </td>
+                                <td class="Hidden"></td>
+                                <td style="width:75%;">
+                                    <div ID="xyzsdexyzsdeDivWorkFlowActionsDropDown" align="left">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="Hidden">
+                                <td style="width:25%;">Action Due Days
+                                </td>
+                                <td></td>
+                                <td style="width:75%;">
+                                    <input type="text" ID="xyzsdexyzsdeTextBoxExecutionOffsetDays" name="TextBoxExecutionOffsetDays" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" ID="xyzsdexyzsdeDivWorkFlowActionParameters" class="textholder padding-0"></td>
+                            </tr>
+                        </table>
+                        <div style="text-align: center; margin-top: 8px; margin-bottom:8px">
+                            <table cellpadding="0" cellspacing="0" align="center">
+                                <tr>
+                                    <td style="padding-right: 5px">
+                                        <input type="button" value="Close" data-dismiss="modal" class="btn btn-default btn-xs button" />
+                                    </td>
+                                    <td style="padding-right: 5px">
+                                        <input type='button' ID="xyzsdexyzsdeButtonUpdateWorkFlowStepAction" value='Insert' onclick='UpdateWorkFlowStepAction()'
+                                            class="btn btn-primary btn-xs button" />
+                                    </td>
+                                    <td>
+                                        <input type="reset" value="Cancel" class="btn btn-default btn-xs button" onclick="CancelAction();" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="details">
+                            <div class="textholder" ID="xyzsdexyzsdeDivWorkFlowStepActionsGrid">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!-- /.modal -->
+    
+</asp:Content>
+<asp:Content ID="xyzsdexyzsdeContent3" ContentPlaceHolderID="xyzsdexyzsdeScriptPlaceHolder" runat="Server">
+    <script type="text/javascript">
+        $(function() {
+        });
+    </script>
+</asp:Content>
