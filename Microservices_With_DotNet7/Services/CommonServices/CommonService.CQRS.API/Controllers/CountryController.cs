@@ -1,0 +1,69 @@
+﻿using CommonService.API.Queries.Country;
+using Shared.Utilities;
+using Shared.ValueObjects;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CommonService.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CountryController : ControllerBase
+    {
+        private readonly IMediator _mediator;
+        private readonly ILogger<CountryController> _logger;
+        public CountryController(IMediator mediator, ILogger<CountryController> logger)
+        {
+            _logger = logger;
+            _mediator = mediator;
+        }
+
+        [HttpPost("Create")]
+        public async Task<IActionResult> Create(CreateCountryDto createCountryDto)
+        {
+            _logger.LogInformation(LogMessages.CreateCountry);
+            int countryId = await _mediator.Send(new CreateCountryCommand(createCountryDto));
+            if (countryId < 1)
+                ExceptionHelper.ThrowCustomException(LogMessages.CreateCountry);
+
+            return Ok();
+        }
+
+        [HttpPut("Edit")]
+        public async Task<IActionResult> Edit(EditCountyDto editCountyDto)
+        {
+            _logger.LogInformation(LogMessages.EditCountry);
+            int countryId = await _mediator.Send(new EditCountryCommand(editCountyDto));
+            if (countryId < 1)
+                ExceptionHelper.ThrowCustomException(LogMessages.EditCountry);
+
+            return Ok();
+        }
+
+        [HttpDelete("Delete/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            _logger.LogInformation(LogMessages.DeleteCountry);
+            bool isDeleted = await _mediator.Send(new DeleteCountryCommand(id));
+            if (!isDeleted)
+                ExceptionHelper.ThrowCustomException(LogMessages.DeleteCountry);
+
+            return Ok();
+        }
+
+        [AllowAnonymous]
+        [HttpGet("GetById/{countryId}")]
+        public async Task<IActionResult> GetById(int countryId)
+        {
+            return Ok(await _mediator.Send(new GetCountryByIdQuery(countryId)));
+        }
+
+        [AllowAnonymous]
+        [HttpGet("GetAll")]
+        public async Task<IActionResult> GetAll([FromQuery] PagingDTO model)
+        {
+            return Ok(await _mediator.Send(new GetCountriesQuery(model)));
+        }
+    }
+}
