@@ -1,0 +1,81 @@
+### Dapr's StateStore and Pubsub Events ###
+
+1. First of all, we have created the image for Dapr Dashboard by writting the following code in the docker-compose.yml file
+	dapr-dashboard:
+  	image: "daprio/dashboard:latest"
+  	command: [ "--docker-compose=true", 
+    		"--components-path=/components", 
+    		"--config-path=/config", 
+    		"--docker-compose-path=/docker-compose.yml" ]
+  	ports:
+    		- "9999:8080"
+  	volumes:
+    		- "./dapr/components/:/components"
+    		- "./dapr/config/:/config"
+    		- ./docker-compose.yml:/docker-compose.yml
+  	logging:
+    		driver: "json-file"
+    	options:
+      		max-size: "5m"
+      		max-file: "2"
+  	networks:
+    		- bcommerce-dapr
+
+2. After that, we have used the dapr's statestore by creating its yml file which is as follows:
+	apiVersion: dapr.io/v1alpha1
+	kind: Component
+	metadata:
+  	name: Xstate
+	spec:
+  		type: state.redis
+  	version: v1
+  	metadata:
+  		- name: redisHost
+    	value: redis_service:port
+  		- name: redisPasscode
+    	value: "" 
+3. Then we used the dapr's pubsub event and also created the yml file for it as well which is as follows:
+	apiVersion: dapr.io/v1alpha1
+	kind: Component
+	metadata:
+  		name: pubsub
+	spec:
+  		type: pubsub.redis
+  	version: v1
+  	metadata:
+  		- name: redisHost
+    	value: redis_service:port
+  		- name: redisPasscode
+    	value: ""
+4. Then we add the follwing services into the Program.cs file so that we can consume it furthur.
+
+	builder.Services.AddControllers().AddDapr();
+
+	builder.Services.AddDaprClient();
+5. This is how we shall be consuming the services in the Service class
+	public class TestService : ITestService
+	{
+		//IDistributedCache is an interface typically used for distributed caching. It allows storing data in a cache that can be shared across multiple instances of application.
+		private IDistributedCache _cache; 
+		private readonly HttpClient _httpClient;
+
+		public TestService(IDistributedCache cache, ISupplierService supplierService)
+		{
+    		  _cache = cache;
+		  //creates an HttpClient instance using DaprClient.CreateInvokeHttpClient, likely configured to communicate with a specific Dapr service.
+    		  _httpClient = DaprClient.CreateInvokeHttpClient(DaprServices.TestService);
+		}
+		
+		private async Task<List<GetAirlinesDto>> GetAllTestsFromDatabase()
+		{
+    		  List<GetTestDto> allTests = new();
+    		  var queryString = CommonHelper.GetQueryParams(new PagingDTO() { PageSize = int.MaxValue });
+    		  var allTestsData = await _httpClient.GetFromJsonAsync<PagedList<GetTestsDto>>($"/api/{StoreKeys.Tests}/GetAll?{queryString}");
+    		  if (allTestsData is not null)
+    		  {
+        		allTests = allTestsData.Items.ToList();
+        		await _cache.SetRecordAsync(StoreKeys.Tests.ToString(), allTests);
+    		  }
+    		  return allTests;
+		}
+	}

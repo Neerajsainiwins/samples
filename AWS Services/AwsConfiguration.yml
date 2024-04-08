@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: 'AWS::Serverless-2016-10-31'
+Description: User on another s3 bucket
+Resources:
+  WatchBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: user-s3-bucket-another
+  S3Function:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: 'AWSServerless::AWSServerless.Function::FunctionHandler'
+      Runtime: dotnet8
+      CodeUri: ''
+      Description: Default function
+      MemorySize: 512
+      Timeout: 30
+      Role: null
+      Policies:
+        - AWSLambda_FullAccess
+        - AmazonS3ReadOnlyAccess
+      Events:
+        NewImagesBucket:
+          Type: S3
+          Properties:
+            Bucket: !Ref WatchBucket
+            Events:
+              - 's3:ObjectCreated:*'
+  DataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+       Bucket: !Ref WatchBucket
+       PolicyDocument:
+         Version: 2012-10-17
+         Statement:
+            - Action:
+                - "s3:GetBucketLocation"
+                - "s3:GetObject"
+                - "s3:ListBucket"
+                - "s3:ListBucketMultipartUploads"
+                - "s3:ListMultipartUploadParts"
+                - "s3:AbortMultipartUpload"
+                - "s3:PutObject"
+              Effect: Allow
+              Resource: 
+                - !Sub "arn:aws:s3:::${WatchBucket}"
+                - !Sub "arn:aws:s3:::${WatchBucket}/*"
+              Principal:
+                AWS:
+                  - arn:aws:iam::UserAwsAccountId:role/Developer
+                  - arn:aws:iam::UserAwsAccountId:role/ReadOnly
+                  - !GetAtt S3FunctionRole.Arn  
+
+  ControlMManagedPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+       Description: "Grant access to controlm user to read/write to s3"
+       ManagedPolicyName: demo-contro-m-to-s3-v2
+       Path: /
+       PolicyDocument:
+         Version: "2012-10-17"
+         Statement:
+           - Action: 
+               - 's3:List*'
+               - 's3:GetObject'
+               - 's3:putObject'
+               - 's3:DeleteObject'
+             Effect: Allow
+             Resource: 
+               - !Sub "arn:aws:s3:::${WatchBucket}"
+               - !Sub "arn:aws:s3:::${WatchBucket}/*"
+       Users:
+         - control-m
+
+Outputs:
+  Bucket:
+    Value: !Ref WatchBucket
+    Description: Bucket that will invoke the lambda function when new objects are created.

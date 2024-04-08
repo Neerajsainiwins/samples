@@ -1,0 +1,86 @@
+### Grafana Loki and Prometheus
+
+1. Here's how we started using the Grafana by creating its image in the docket-compose.yml file
+	grafana:
+  	image: grafana/grafana:master
+  	container_name: grafana_grafprom
+  	restart: always
+  	ports:
+    		- port:port
+  	volumes:
+      		- ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+     		 - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+  	logging:
+    		driver: "json-file"
+    	options:
+      		max-size: "5m"
+      		max-file: "2"
+  	depends_on:
+      		- prometheus // Here's its telling the grafana's dependancy on Prometheus and loki
+      		- loki
+        networks:
+      		- loki
+2. Then we created the image for Loki as follows:
+	loki:
+  	image: grafana/loki:latest
+  	container_name: loki
+  	restart: always
+  	ports:
+    		- port:port
+  	volumes:
+    		- ./loki:/etc/loki
+  	command: -config.file=/etc/loki/loki-config.yml
+  	logging:
+   		 driver: "json-file"
+    	options:
+      		max-size: "5m"
+      		max-file: "2"
+    	networks:
+    		- loki 
+3. Prometheus's image is as follows:
+	prometheus:
+  	image: prom/prometheus:latest
+  	container_name: prometheus_grafprom
+  	restart: always
+  	ports:
+    		- port:port
+  	volumes:
+    		- ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+  	logging:
+  		driver: "json-file"
+    	options:
+      		max-size: "5m"
+      		max-file: "2"
+  
+  	networks:
+    		- loki
+
+4. In the next step we have consumed the grafana and loki as a service in Program.cs
+
+	 Logger logger = new LoggerConfiguration()
+    	.ReadFrom.Configuration(builder.Configuration)
+    	.Enrich.FromLogContext()
+    	.WriteTo.GrafanaLoki("http://localhost:port")
+    	.WriteTo.LokiHttp(new NoAuthCredentials(builder.Configuration.GetConnectionString("Loki")))
+    	.CreateLogger();
+
+	This code snippet initializes a Serilog logger with configuration settings for logging to Grafana Loki. Let's break it down step by step:
+
+	- Logger logger = new LoggerConfiguration()
+	  This line starts the configuration of a Serilog logger.
+
+	- .ReadFrom.Configuration(builder.Configuration)
+	  This line reads the configuration settings for the logger from a configuration source. The builder.Configuration typically refers to an instance of IConfigurationBuilder, which 	  represents a set of key/value application configuration properties.
+
+	- .Enrich.FromLogContext()
+	  This line enriches the log events with additional context information from the logging context. This might include properties such as timestamp, log level, thread ID, etc.
+
+	- .WriteTo.GrafanaLoki("http://localhost:port")
+	  This line configures the logger to write log events to Grafana Loki. Grafana Loki is a horizontally-scalable, highly-available log aggregation system inspired by Prometheus. It 	  collects, indexes, and stores logs for later retrieval and analysis. The URL http://localhost:port specifies the endpoint where Grafana Loki is running.
+
+	- .WriteTo.LokiHttp(new NoAuthCredentials(builder.Configuration.GetConnectionString("Loki")))
+	  This line configures the logger to write log events to Loki using HTTP. Loki is a horizontally-scalable, highly-available log aggregation system similar to Grafana Loki but may 	  be used separately.
+	  builder.Configuration.GetConnectionString("Loki") retrieves the connection string named "Loki" from the configuration, which typically contains the URL or endpoint information 	  for Loki.
+
+	- .CreateLogger();
+	  This line finalizes the configuration and creates an instance of the logger based on the specified settings.
