@@ -1,0 +1,96 @@
+<html>
+	<body>
+		<table align="center"
+		       style="text-align: left;direction: ltr;width: 850px; font-family:"
+		       Segoe
+		       UI",Helvetica,Arial,sans-serif;"
+		       cellpadding="0"
+		       cellspacing="0">
+			<tr>
+				<td colspan="2"
+				    height="20px"
+				    style="height:20px;">&nbsp;</td>
+			</tr>
+			<tr>
+				<td style="padding:10px 20px ; background:#be9e65 ; "
+				    width="1%">
+					<img src="https://abc/Content/images/notification-icon.png"/>
+				</td>
+				<td style="padding: 10px 20px; background: #be9e65; color: #ffffff; border-top-right-radius: 10px; ">Notification: Application<b>@Model.ApplicationNumber</b>for service<b>@Model.ServiceName</b>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2"
+				    style="padding: 20px; border:solid 1px #be9e65 ; border-bottom-left-radius: 10px ; border-bottom-right-radius: 10px ; ">
+					<table cellspacing="1"
+					       cellpadding="0"
+					       border="0"
+					       style="width: 100%;">
+						<tr>
+							<td>&nbsp;</td>
+						</tr>
+						<tr>
+							<td>
+								<p style="color:#222;padding:0;margin-bottom:10px;">
+									<strong>Dear @Model.UserName,</strong>
+								</p>
+							</td>
+							<td style="text-align:right;">
+								<img src="https://abc/Content/images/date-image-blk.png"
+								     style="width:18px;position:relative;top:2px;"/>
+								<span style="margin-left:10px;color:#be9e65;font-size:14px;">@DateTime.Now.ToString("yyyy/MM/dd")</span>
+							</td>
+						</tr>
+					</table>
+					<p style="color:#222;">Text for services services.</p>
+					<p style="color:#222;">Text for services services:<b>@Model.ApplicationNumber</b>for service<b>@Model.ServiceName.</b>
+					</p>
+					<p style="color:#222;">Application status is: @Model.TextResourceApplicationStatus<b>@Model.Name</b>@Model.TextResourceAppProcess</p>@if(@Model.Details != null)                  {<table class="final-scopes">
+						<colgroup>
+							<col style="width: 10%;"/>
+							<col style="width: 30%;"/>
+							<col style="width: 30%;"/>
+							<col style="width: 30%;"/>
+						</colgroup>
+						<tbody>
+							<thead>
+								<th>#</th>
+								<th>code</th>
+								<th>Quantity</th>
+								<th>Amount</th>
+							</thead>@{int i=1;} @foreach (var key in @Model.Details) {<tr>
+								<td>@(i++)</td>
+								<td>@key.Code<br/>
+									<td>@key.Quantity<br/>
+										<td>@key.Amount<br/>
+										</tr>}</tbody>
+								</table>
+								<br/>
+								<p>Fee :<b>@Model.PaymentFee</b>
+								</p>
+								<p>SubTotal Amount :<b>@Model.SubTotal</b>
+								</p>
+								<p>Total Amount :<b>@Model.TotalAmount</b>
+								</p>} @if(!string.IsNullOrWhiteSpace(@Model.AssignedUsers))                  {<p>Currently the following users are<b>assigned to</b>this application:</p>
+								<p>@Raw(@Model.AssignedUsers)</p>
+								<br/>}                  @if(!string.IsNullOrWhiteSpace(@Model.Comments))                  {<p>
+									<b>@Model.CommentByUser</b>has wrote the following:</p>
+								<p>@Raw(@Model.Comments)</p>}<a href="@Model.ApplicationUrl">
+									<img style="width:100px"
+									     src="https://abc/Content/images/view-btn-en.jpg"/>
+								</a>
+								<br/>
+								<p>Have a good day!</p>
+								<p style="color:#222;">
+									<strong>Regards,</strong>
+								</p>
+								<p style="color:#222;">Advanced Technology</p>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2"
+							    height="20"/>
+						</tr>
+					</table>
+				</body>
+			</html>
