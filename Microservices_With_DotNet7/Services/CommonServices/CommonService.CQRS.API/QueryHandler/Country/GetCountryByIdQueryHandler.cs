@@ -3,7 +3,7 @@ using CommonService.API.Application.UnitOfWork;
 using CommonService.API.Queries.Country;
 using MediatR;
 
-namespace BCommerce.CommonService.API.QueryHandler.Country
+namespace Project.CommonService.API.QueryHandler.Country
 {
     public class GetCountryByIdQueryHandler : IRequestHandler<GetCountryByIdQuery, GetCountriesDto>
     {

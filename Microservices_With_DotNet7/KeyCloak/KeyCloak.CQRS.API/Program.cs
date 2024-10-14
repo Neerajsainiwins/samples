@@ -5,7 +5,9 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddAutoMapper(typeof(MappingProfiles));
+
+builder.Services.AddControllers().AddDapr();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddDbContext<AppDbContext>(opt =>
@@ -24,6 +26,20 @@ builder.Services.AddSwaggerGen(option => {
         BearerFormat = builder.Configuration.GetValue<string>("Swagger:BearerFormat"),
         Scheme = builder.Configuration.GetValue<string>("Swagger:Scheme")
     });
+});
+
+builder.Services.AddHttpClient(HttpClientType.KeycloakClient.ToString()).AddHttpMessageHandler<LoggingHandler>();
+
+builder.Services.AddHttpClient(HttpClientType.DefaultClient.ToString(), client =>
+{
+ client.BaseAddress = new Uri(builder.Configuration.GetValue<string>("ApiSettings:GatewayUrl"));
+});
+
+builder.Services.AddSingleton(provider =>
+{
+ var environment = provider.GetRequiredService<IHostEnvironment>().EnvironmentName;
+ var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+ return new CustomHttpClientFactory(environment, httpClientFactory);
 });
 
 builder.Services.AddCors(options =>
@@ -56,6 +72,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("AllowAll");
 
-app.MapControllers();
+app.UseEndpoints(endpoints =>
+{
+ endpoints.MapSubscribeHandler();
+ endpoints.MapControllers();
+});
 
 app.Run();

@@ -1,9 +1,9 @@
-﻿using BCommerce.KeyCloak.API.Infrastructure.Entities;
-using BCommerce.KeyCloak.API.Queries;
-using BCommerce.KeyCloak.API.Services;
+﻿using KeyCloak.API.Infrastructure.Entities;
+using KeyCloak.API.Queries;
+using KeyCloak.API.Services;
 using MediatR;
 
-namespace BCommerce.KeyCloak.API.QueryHandler
+namespace KeyCloak.API.QueryHandler
 {
     public class GetUserQueryHandler : IRequestHandler<GetUserQuery, List<Users>>
     {

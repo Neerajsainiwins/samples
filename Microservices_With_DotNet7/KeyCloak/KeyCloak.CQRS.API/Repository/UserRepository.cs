@@ -1,8 +1,8 @@
-﻿using BCommerce.KeyCloak.API.Infrastructure.Context;
-using BCommerce.KeyCloak.API.Infrastructure.Entities;
+﻿using Project.KeyCloak.API.Infrastructure.Context;
+using Project.KeyCloak.API.Infrastructure.Entities;
 using System.Linq.Expressions;
 
-namespace BCommerce.KeyCloak.Repository
+namespace Project.KeyCloak.Repository
 {
     public class UserRepository : IUserRepository
     {

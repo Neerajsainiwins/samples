@@ -8,7 +8,7 @@
     		"--config-path=/config", 
     		"--docker-compose-path=/docker-compose.yml" ]
   	ports:
-    		- "9999:8080"
+    		- "port:8080"
   	volumes:
     		- "./dapr/components/:/components"
     		- "./dapr/config/:/config"
@@ -19,7 +19,7 @@
       		max-size: "5m"
       		max-file: "2"
   	networks:
-    		- bcommerce-dapr
+    		- project-dapr
 
 2. After that, we have used the dapr's statestore by creating its yml file which is as follows:
 	apiVersion: dapr.io/v1alpha1
@@ -47,7 +47,7 @@
     	value: redis_service:port
   		- name: redisPasscode
     	value: ""
-4. Then we add the follwing services into the Program.cs file so that we can consume it furthur.
+4. Then we add the follwing services into the Program.cs file so that we can consume it further.
 
 	builder.Services.AddControllers().AddDapr();
 
@@ -66,7 +66,7 @@
     		  _httpClient = DaprClient.CreateInvokeHttpClient(DaprServices.TestService);
 		}
 		
-		private async Task<List<GetAirlinesDto>> GetAllTestsFromDatabase()
+		private async Task<List<GetProductsDto>> GetAllTestsFromDatabase()
 		{
     		  List<GetTestDto> allTests = new();
     		  var queryString = CommonHelper.GetQueryParams(new PagingDTO() { PageSize = int.MaxValue });

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BCommerce.KeyCloak.API.Infrastructure.Entities
+namespace Project.KeyCloak.API.Infrastructure.Entities
 {
     public class Clients : CommonTable
     {

@@ -1,8 +1,8 @@
-﻿using BCommerce.KeyCloak.API.Infrastructure.Entities;
+﻿using KeyCloak.API.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
-namespace BCommerce.KeyCloak.API.Infrastructure.Context
+namespace KeyCloak.API.Infrastructure.Context
 {
     public class AppDbContext : DbContext
     {
@@ -16,7 +16,5 @@ namespace BCommerce.KeyCloak.API.Infrastructure.Context
         }
 
         public DbSet<Users> Users { get; set; }
-        public DbSet<Clients> Clients { get; set; }
-        public DbSet<Roles> Roles { get; set; }
     }
 }

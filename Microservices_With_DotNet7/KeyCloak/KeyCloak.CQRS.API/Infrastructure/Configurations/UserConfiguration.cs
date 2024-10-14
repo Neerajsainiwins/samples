@@ -1,8 +1,8 @@
-﻿using BCommerce.KeyCloak.API.Infrastructure.Entities;
+﻿using KeyCloak.API.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace BCommerce.KeyCloak.API.Infrastructure.Configurations
+namespace KeyCloak.API.Infrastructure.Configurations
 {
     public class UserConfiguration : IEntityTypeConfiguration<Users>
     {

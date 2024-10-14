@@ -1,0 +1,53 @@
+﻿{
+  "GlobalConfiguration": {
+    "BaseUrl": "http://host.docker.internal:port number",
+    "DownstreamScheme": "http",
+    "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+    "RateLimitOptions": {
+      "EnableRateLimiting": true,
+      "Period": "10s",
+      "PeriodTimespan": 10,
+      "Limit": 3
+    },
+    "FileCacheOptions": {
+      "TtlSeconds": 120
+    },
+    "ServiceDiscoveryProvider": {
+      "Scheme": "http",
+      "Host": "host.docker.internal",
+      "Port": port number,
+      "Type": "Consul",
+      "PollingInterval": 100
+    }
+  },
+  "Routes": [
+    //aggregator
+    {
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "host.docker.internal",
+          "Port": port number
+        }
+      ],
+      "UpstreamPathTemplate": "/gateway/aggregator/{everything}",
+      "SwaggerKey": "aggregator"
+    }
+  ],
+  "SwaggerEndPoints": [
+    {
+      "Key": "aggregator",
+      "Config": [
+        {
+          "Name": "Aggregator API",
+          "Version": "v1",
+          "Url": "http://host.docker.internal:port number/swagger/v1/swagger.json"
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-﻿using BCommerce.DataAccess.Shared.Interfaces;
+﻿using Project.DataAccess.Shared.Interfaces;
 
-namespace BCommerce.CommonService.API.Application.UnitOfWork
+namespace Project.CommonService.API.Application.UnitOfWork
 {
     public interface IUnitOfWork : IDisposable
     {

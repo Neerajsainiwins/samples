@@ -1,4 +1,4 @@
-﻿namespace BCommerce.KeyCloak.API.Infrastructure.Entities
+﻿namespace KeyCloak.API.Infrastructure.Entities
 {
     public class Users : CommonTable
     {

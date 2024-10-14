@@ -1,8 +1,8 @@
-﻿using BCommerce.KeyCloak.API.Command.Create;
-using BCommerce.KeyCloak.API.Services;
+﻿using Project.KeyCloak.API.Command.Create;
+using Project.KeyCloak.API.Services;
 using MediatR;
 
-namespace BCommerce.KeyCloak.API.CommandHandler.User
+namespace Project.KeyCloak.API.CommandHandler.User
 {
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, bool>
     {

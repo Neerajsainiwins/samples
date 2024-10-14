@@ -30,17 +30,6 @@ namespace CommonService.API.Controllers
             return Ok();
         }
 
-        [HttpPut("Edit")]
-        public async Task<IActionResult> Edit(EditCountyDto editCountyDto)
-        {
-            _logger.LogInformation(LogMessages.EditCountry);
-            int countryId = await _mediator.Send(new EditCountryCommand(editCountyDto));
-            if (countryId < 1)
-                ExceptionHelper.ThrowCustomException(LogMessages.EditCountry);
-
-            return Ok();
-        }
-
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -52,18 +41,5 @@ namespace CommonService.API.Controllers
             return Ok();
         }
 
-        [AllowAnonymous]
-        [HttpGet("GetById/{countryId}")]
-        public async Task<IActionResult> GetById(int countryId)
-        {
-            return Ok(await _mediator.Send(new GetCountryByIdQuery(countryId)));
-        }
-
-        [AllowAnonymous]
-        [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAll([FromQuery] PagingDTO model)
-        {
-            return Ok(await _mediator.Send(new GetCountriesQuery(model)));
-        }
     }
 }

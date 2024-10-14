@@ -1,6 +1,6 @@
-﻿using BCommerce.KeyCloak.API.DTOs;
+﻿using Project.KeyCloak.API.DTOs;
 
-namespace BCommerce.KeyCloak.API.Services
+namespace Project.KeyCloak.API.Services
 { 
     public interface IAuthService
     {

@@ -1,8 +1,8 @@
-﻿using BCommerce.KeyCloak.API.Infrastructure.Entities;
+﻿using Project.KeyCloak.API.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace BCommerce.KeyCloak.API.Infrastructure.Configurations
+namespace Project.KeyCloak.API.Infrastructure.Configurations
 {
     public class ClientConfiguration : IEntityTypeConfiguration<Clients>
     {

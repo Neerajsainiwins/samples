@@ -1,9 +1,9 @@
-﻿using BCommerce.CommonService.API.Queries.City;
-using BCommerce.KeyCloak.API.DTOs;
+﻿using Project.CommonService.API.Queries.City;
+using Project.KeyCloak.API.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BCommerce.KeyCloak.API.Controllers
+namespace Project.KeyCloak.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
