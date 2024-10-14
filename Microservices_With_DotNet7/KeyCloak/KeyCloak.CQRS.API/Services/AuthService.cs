@@ -1,7 +1,7 @@
-﻿using BCommerce.KeyCloak.API.DTOs;
+﻿using Project.KeyCloak.API.DTOs;
 using Newtonsoft.Json;
 
-namespace BCommerce.KeyCloak.API.Services
+namespace Project.KeyCloak.API.Services
 {
     public class AuthService : IAuthService
     {
