@@ -1,6 +1,6 @@
 ﻿{
   "GlobalConfiguration": {
-    "BaseUrl": "http://host.docker.internal:port number",
+    "BaseUrl": "http://host.docker.internal:portnumber",
     "DownstreamScheme": "http",
     "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
     "RateLimitOptions": {
@@ -15,7 +15,7 @@
     "ServiceDiscoveryProvider": {
       "Scheme": "http",
       "Host": "host.docker.internal",
-      "Port": port number,
+      "Port": portnumber,
       "Type": "Consul",
       "PollingInterval": 100
     }
@@ -31,7 +31,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "host.docker.internal",
-          "Port": port number
+          "Port": portnumber
         }
       ],
       "UpstreamPathTemplate": "/gateway/aggregator/{everything}",
