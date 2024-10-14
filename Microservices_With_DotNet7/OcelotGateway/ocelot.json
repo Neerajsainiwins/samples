@@ -15,7 +15,7 @@
     "ServiceDiscoveryProvider": {
       "Scheme": "http",
       "Host": "host.docker.internal",
-      "Port": portnumber,
+      "Port": "portnumber",
       "Type": "Consul",
       "PollingInterval": 100
     }
@@ -31,7 +31,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "host.docker.internal",
-          "Port": portnumber
+          "Port": "portnumber"
         }
       ],
       "UpstreamPathTemplate": "/gateway/aggregator/{everything}",
