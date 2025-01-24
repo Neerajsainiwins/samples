@@ -1,0 +1,193 @@
+﻿@page "/update-profile"
+@attribute [Authorize]
+@inject IUserService userService
+@inject GetClaimsFromToken getClaimsFromToken
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="text-center"><i class="fas fa-user-edit"></i> Update User Profile</h4>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="FirstName">First Name:</label>
+                            <input type="text" id="FirstName" class="form-control" @bind="@users.FirstName" placeholder="Enter First Name" required
+                                   oninvalid="this.setCustomValidity('Please enter your first name')"
+                                   oninput="this.setCustomValidity('')" />
+                        </div>
+                        <div class="form-group">
+                            <label for="LastName">Last Name:</label>
+                            <input type="text" id="LastName" class="form-control" @bind="@users.LastName" placeholder="Enter Last Name" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Email">Email:</label>
+                            <input type="email" id="Email" class="form-control" @bind="@users.Email" placeholder="Enter Email Address"  required/>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="button" class="btn btn-warning px-5" @onclick="ShowChangePasswordModal">
+                                <i class="fas fa-key"></i> Change Password
+                            </button>
+                            <button type="button" class="btn btn-success px-5" @onclick="SaveUserProfile">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Change Password Modal -->
+<div class="modal @(isChangePasswordModalVisible ? "show" : "")" tabindex="-1" role="dialog" style="display: @(isChangePasswordModalVisible ? "block" : "none"); background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fas fa-key"></i> Change Password</h5>
+                <button type="button" class="close" @onclick="CloseChangePasswordModal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label for="CurrentPassword">Current Password:</label>
+                        <input type="password" id="CurrentPassword" class="form-control" @bind="@changePasswordDto.CurrentPassword" placeholder="Enter Current Password" />
+                    </div>
+                    <div class="form-group">
+                        <label for="NewPassword">New Password:</label>
+                        <input type="password" id="NewPassword" class="form-control" @bind="@changePasswordDto.NewPassword" placeholder="Enter New Password" />
+                    </div>
+                    <div class="form-group">
+                        <label for="ConfirmNewPassword">Confirm New Password:</label>
+                        <input type="password" id="ConfirmNewPassword" class="form-control" @bind="@changePasswordDto.ConfirmNewPassword" placeholder="Confirm New Password" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseChangePasswordModal">Cancel</button>
+                <button type="button" class="btn btn-success" @onclick="ChangePassword">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private bool isChangePasswordModalVisible = false;
+    private ChangePasswordDto changePasswordDto = new ChangePasswordDto();
+
+    private string NameFilter = string.Empty;
+    private int PageIndex = 1;
+    private int PageSize = 100;
+    private string SortBy = "Title";
+    private string SortOrder = "asc";
+    private int TotalPages;
+    private ModalType modalType;
+    private bool isProfileModalVisible = false;
+    List<UserDto> UserProfileData { get; set; } = new List<UserDto>();
+    private UserDto users { get; set; } = new UserDto();
+
+    protected async override Task OnInitializedAsync()
+    {
+        await GetUserProfile();
+    }
+    private async Task GetUserProfile()
+    {
+        var userProfileId = (await getClaimsFromToken.GetClaims("uid",null)).FirstOrDefault().Value;
+
+        var response = await userService.GetUserById(userProfileId);
+        if (response != null)
+        {
+            UserProfileData = response.UserData.ToList();
+            if (UserProfileData.Any())
+            {
+                users = UserProfileData.First();
+            }
+        }
+    }
+    private void CloseChangePasswordModal()
+    {
+        isChangePasswordModalVisible = false;
+        changePasswordDto = new ChangePasswordDto();
+    }
+    private void OpenModal()
+    {
+        isProfileModalVisible = true;
+    }
+    private void ShowChangePasswordModal()
+    {
+        isChangePasswordModalVisible = true;
+    }
+    private async Task ChangePassword()
+    {
+        if (string.IsNullOrEmpty(changePasswordDto.CurrentPassword))
+        {
+            ToastService.ShowToast("Current password is required.", ToastLevel.Error);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(changePasswordDto.NewPassword))
+        {
+            ToastService.ShowToast("New password is required.", ToastLevel.Error);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(changePasswordDto.ConfirmNewPassword))
+        {
+            ToastService.ShowToast("Please confirm your new password.", ToastLevel.Error);
+            return;
+        }
+
+        if (changePasswordDto.NewPassword != changePasswordDto.ConfirmNewPassword)
+        {
+            ToastService.ShowToast("New password and confirmation password do not match.", ToastLevel.Error);
+            return;
+        }
+
+        changePasswordDto.UserId = (await getClaimsFromToken.GetClaims("uid", null)).FirstOrDefault().Value;
+        var response = await userService.ChangePassword(changePasswordDto);
+        if (response.IsSuccessStatusCode)
+        {
+            var successMessage = await response.Content.ReadAsStringAsync();
+            ToastService.ShowToast(successMessage, ToastLevel.Success);
+            CloseChangePasswordModal();
+        }
+        else
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            ToastService.ShowToast(errorMessage, ToastLevel.Error);
+        }
+    }
+    private async Task SaveUserProfile()
+    {
+        if (string.IsNullOrEmpty(users.FirstName) || string.IsNullOrEmpty(users.LastName) || string.IsNullOrEmpty(users.Email))
+        {
+            ToastService.ShowToast("Fill all the fields", ToastLevel.Error);
+            return;
+        }
+        try
+        {
+            string id = (await getClaimsFromToken.GetClaims("uid", null)).FirstOrDefault().Value;
+
+            var result = await userService.UpdateUser(users, id);
+
+            if (result?.Success == true)
+            {
+                ToastService.ShowToast("Profile Updated successfully!", Enums.ToastLevel.Success);
+            }
+            else
+            {
+                ToastService.ShowToast(result?.Message ?? "Failed to update pofile.", Enums.ToastLevel.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowToast($"Error: {ex.Message}", Enums.ToastLevel.Error);
+        }
+    }
+}

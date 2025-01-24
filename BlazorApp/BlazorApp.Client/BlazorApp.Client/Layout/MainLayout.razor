@@ -1,0 +1,98 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inherits LayoutComponentBase
+@inject NavigationManager navigationManager
+@using BlazorApp.Client.Components.Toast
+<div class="page">
+    <!-- Sidebar for Authorized Users -->
+    <AuthorizeView>
+        <Authorized>
+            <div class="sidebar sidebar-wrap">
+                <AutoHideSidebar />
+            </div>
+        </Authorized>
+    </AuthorizeView>
+
+
+    <!-- Main content area -->
+    <main>
+        <Toast>
+            <ChildContent>
+            </ChildContent>
+        </Toast>
+        <!-- Navbar with login/logout and API documentation links -->
+        @if (ShouldShowNavbar)
+        {
+            <nav class="navbar navbar-expand navbar-dark bg-dark px-3 sticky-top">
+                <div class="d-flex align-items-center w-100">
+                    <!-- Navbar Brand -->
+                    <NavLink href="/" Match="NavLinkMatch.All" class="navbar-brand">Blazor Crud</NavLink>
+
+                    <!-- API Documentation Link -->
+                    <NavLink href="http://localhost:5093/swagger/index.html" class="nav-item nav-link p-0 m-0" target="_blank">
+                        API Documentation
+                    </NavLink>
+
+                    <!-- Login/Logout Button based on Authorization -->
+                    <div id="AuthorizedView">
+                        <AuthorizeView>
+                            <Authorized>
+                                <div class="dropdown-container">
+                                    <div class="dropdown">
+                                        <button class="dropdown-toggle"><i class="bi bi-person-circle"></i></button>
+                                        <div class="dropdown-menu position-absolute end-0 d-none">
+                                            <ul class="p-0 m-0 list-unstyled list-inline">
+                                                <li><NavLink class="dropdown-item" href="/update-profile">Profile</NavLink></li>
+                                                <li><NavLink class="dropdown-item" href="/logout">Logout</NavLink></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Authorized>
+                            <NotAuthorized>
+                                <!-- Login Link for Unauthorized Users -->
+                                <NavLink href="/users/login" Match="NavLinkMatch.All" class="nav-item nav-link navbar-brand">Login</NavLink>
+                            </NotAuthorized>
+                        </AuthorizeView>
+                    </div>
+                </div>
+            </nav>
+            <!-- Footer -->
+            <footer class="footer mt-auto py-2">
+                <div class="container text-center">
+                    <span class="text-white">&copy; Beckshome.com 2024</span>
+                </div>
+            </footer>
+        }
+        <!-- Content -->
+    
+        <div>
+            @Body
+        </div>
+
+       
+    </main>
+</div>
+
+@code {
+    private bool isLoggedIn;
+    private string? userName;
+    private bool ShouldShowNavbar => navigationManager.Uri.EndsWith("/") || navigationManager.Uri.Contains("admin/Dashboard") 
+    || navigationManager.Uri.Contains("author/index") || navigationManager.Uri.Contains("book/index");
+
+    protected override async Task OnInitializedAsync()
+
+    {
+        // Get the authentication state of the user
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        // Check if the user is authenticated
+        isLoggedIn = authState.User.Identity.IsAuthenticated;
+
+        // If authenticated, fetch the user's name
+        if (isLoggedIn)
+        {
+            userName = authState.User.Identity.Name;
+        }
+    }
+}

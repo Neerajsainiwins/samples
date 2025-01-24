@@ -1,0 +1,49 @@
+﻿.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(45deg, #6c757d, #495057);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(45deg, #28a745, #1e7e34);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(45deg, #ffc107, #d39e00);
+}
+
+.card {
+    border-radius: 10px;
+}
+
+.card-header {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.row.g-4 {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%; /* Ensures consistent height */
+}
+
+.card-body {
+    flex: 1; /* Distributes available space */
+    text-align: center;
+}
+
+.card-title {
+    margin-bottom: 1rem;
+}
+
+.card-text {
+    font-size: 0.875rem; /* Adjust text size if needed */
+}

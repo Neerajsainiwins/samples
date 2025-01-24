@@ -1,0 +1,139 @@
+﻿@page "/book/index"
+@inject IBookService bookService
+@inject ILogger<AuthorAddUpdateDTO> Logger
+@using Microsoft.AspNetCore.SignalR.Client
+@inject HubConnection hubConnection
+@inject GetClaimsFromToken getClaimsFromToken
+
+<div class="container-fluid mt-2">
+    <div class="row">
+        <div class="col-12">
+<div style="float:right;margin-bottom:15px;">
+    <button class="btn btn-primary btn-sm" @onclick="() => OpenModal(ModalType.Add)"><i class="bi bi-plus"></i></button>
+    @* <input type="text" @bind="NameFilter" @oninput="ApplyFilter" style="border-radius:5px" placeholder="Filter by first name" /> *@
+
+</div>
+<!-- Books List -->
+@if (Books != null && Books.Any())
+{
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th id="Title" @onclick='() => ApplySorting("Title")'>Title</th>
+                <th id="Year" @onclick='() => ApplySorting("Year")'>Year</th>
+                <th id="ISBN" @onclick='() => ApplySorting("ISBN")'>ISBN</th>
+                <th id="Summary" @onclick='() => ApplySorting("Summary")'>Summary</th>
+                <th id="Price" @onclick='() => ApplySorting("Price")'>Price</th>
+                <th id="Action">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var book in Books)
+            {
+                <tr>
+                    <td>@book.Title</td>
+                    <td>@book.Year</td>
+                    <td>@book.ISBN</td>
+                    <td>@book.Summary</td>
+                    <td>@book.Price</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" @onclick="() => OpenModal(ModalType.Update, book)"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => OpenModal(ModalType.Delete, book)"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-primary btn-sm" @onclick="() => OpenModal(ModalType.View, book)"><i class="bi bi-eye"></i></button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No Books available.</p>
+}
+@* <!-- Pagination -->
+<div>
+    <button style="border-radius:5px" @onclick="PreviousPage" disabled="@(!CanGoToPreviousPage)">Previous</button>
+    <button style="border-radius:5px" @onclick="NextPage" disabled="@(!CanGoToNextPage)">Next</button>
+</div>
+
+<!-- Current Page Display -->
+<div class="pagination-info">
+    <p>Page @PageIndex of @TotalPages</p>
+</div>
+ *@
+ </div>
+ </div>
+ </div>
+<div class="modal @(isModalVisible ? "show" : "")" tabindex="-1" role="dialog" style="display: @(isModalVisible ? "block" : "none")">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Books</h5>
+                <button type="button" class="close" @onclick=CloseModal>
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    @if (modalType == ModalType.Add || modalType == ModalType.Update)
+                    {
+                        <form>
+                            <div class="form-group">
+                                <label for="Title">Title: </label>
+                                <input type="text" class="form-control" @bind="@currentBook.Title" placeholder="Enter Title" />
+                            </div>
+                            <div class="form-group">
+                                <label for="LastName">Year: </label>
+                                <input type="number" class="form-control" @bind="@currentBook.Year" placeholder="Enter Year" />
+                            </div>
+                            <div class="form-group">
+                                <label for="Summary">Summary: </label>
+                                <input type="text" class="form-control" @bind="@currentBook.Summary" placeholder="Enter Summary" />
+                            </div>
+                            <div class="form-group">
+                                <label for="Image">Image: </label>
+                                <input type="text" class="form-control" @bind="@currentBook.Image" placeholder="Enter Image" />
+                            </div>
+                            <div class="form-group">
+                                <label for="ISBN">ISBN: </label>
+                                <input type="text" class="form-control" @bind="@currentBook.ISBN" placeholder="Enter ISBN" />
+                            </div>
+                            <div class="form-group">
+                                <label for="Price">Price: </label>
+                                <input type="text" class="form-control" @bind="@currentBook.Price" placeholder="Enter Price" />
+                            </div>
+                            <div class="form-group">
+                                <label for="AuthorId">AuthorId: </label>
+                                <input type="text" class="form-control" @bind="@currentBook.AuthorId" placeholder="Enter AuthorId" />
+                            </div>
+                        </form>
+                    }
+                    else if (modalType == ModalType.View)
+                    {
+                        <p><strong>First Name:</strong> @viewBook.Title</p>
+                        <p><strong>Last Name:</strong> @viewBook.Year</p>
+                        <p><strong>Bio:</strong> @viewBook.ISBN</p>
+                    }
+                    else if (modalType == ModalType.Delete)
+                    {
+                        <p>Are you sure you want to delete this author?</p>
+                    }
+
+                </div>
+                <div class="modal-footer">
+                    @if (modalType == ModalType.Delete)
+                    {
+                        @* <button class="btn btn-danger" @onclick="() => ConfirmDeleteAuthor(deleteBookId)">Delete</button> *@
+                        @* <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button> *@
+                    }
+                    else
+                    {
+                        <button class="btn btn-success" @onclick="() => SaveBook()">Save</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+

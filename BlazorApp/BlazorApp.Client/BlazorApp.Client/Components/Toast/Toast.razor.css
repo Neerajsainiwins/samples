@@ -1,0 +1,90 @@
+﻿/* Ensure toast container holds all messages */
+.toast-message-container {
+    position: fixed;
+    top: 70px;
+    right: 0%;
+    width: 300px;
+    z-index: 1000;
+    pointer-events: none; /* So that clicks do not interfere with other elements */
+}
+
+.toast {
+    /*display: none;*/ 
+    position: absolute;
+    right: 4% !important;
+    z-index: 999 !important;
+    animation: slide-in 0.5s ease-out;
+}
+.toast:not(.show) {
+    display: block !important;
+}
+/* Make sure the toast is displayed with different colors based on the level */
+.toast-message-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin-bottom: 10px;
+}
+
+.toast-message-success {
+    background-color: #28a745;
+}
+
+.toast-message-failure {
+    background-color: #dc3545;
+}
+
+.toast-message-alert {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.toast-message-warning {
+    background-color: #ff8800;
+}
+
+.toast-message-default {
+    background-color: #17a2b8;
+}
+
+/* Button to close the toast */
+.toast-close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+    .toast-close-button:hover {
+        color: #000;
+    }
+
+@keyframes slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-out {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}

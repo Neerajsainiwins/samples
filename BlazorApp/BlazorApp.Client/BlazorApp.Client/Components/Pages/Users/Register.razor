@@ -1,0 +1,92 @@
+﻿@page "/Register"
+@using Microsoft.Extensions.Logging
+@inject ILogger<LoginUserDto> Logger
+
+<div class="register-wrapper">
+    <div class="register-wrapper-inner">
+        <h4 class="text-white">Register</h4>
+        <div class="register-wrapper-body">
+            <EditForm Model="@user" OnValidSubmit="HandleRegister" FormName="loginForm">
+                <DataAnnotationsValidator />
+                <div class="form-group mb-2">
+                    <label class="text-white">Username</label>
+                    <InputText class="form-control text-white" id="username" @bind-Value="user.Email" />
+                    <ValidationMessage For="@(() => user.Email)" />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="text-white">Password</label>
+                    <InputText @bind-Value="user.Password" type="password" id="password" class="form-control text-white" />
+                    <ValidationMessage For="@(() => user.Password)" />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="text-white">First Name</label>
+                    <InputText @bind-Value="user.FirstName" id="FirstName" class="form-control  text-white" />
+                    <ValidationMessage For="@(() => user.FirstName)" />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="text-white">Last Name</label>
+                    <InputText @bind-Value="user.LastName" id="LastName" class="form-control text-white" />
+                    <ValidationMessage For="@(() => user.LastName)" />
+                </div>
+                <div class="form-group mb-1">
+                    <label class="text-white">Role</label>
+                    <InputText @bind-Value="user.Role" id="Role" class="form-control text-white" />
+                    <ValidationMessage For="@(() => user.Role)" />
+                </div><br />
+                <div>
+                    <button disabled="@loading" class="btn btn-primary w-100 btn-sm py-2" type="submit">
+                        @if (loading)
+                        {
+                            <span class="spinner-border spinner-border-sm mr-1"></span>
+                        }
+                        Register
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+        <div class="d-flex text-white justify-content-center mt-2">
+            <span>Already have an account?</span>
+            <NavLink href="/users/login" class="ms-2 text-white font-weight-bold">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span>Log in
+            </NavLink>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm]
+    public UserDto user { get; set; } = new UserDto();
+    private string? ResponseMessage = string.Empty;
+    private bool loading;
+    public async Task HandleRegister()
+    {
+        try
+        {
+            loading = true;
+            var response = await http.PostAsJsonAsync("http://localhost:5093/api/Auth/register", user);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ApiResponse>();
+                ResponseMessage = result?.Message;
+                ToastService.ShowToast("Register successfully!", ToastLevel.Success);
+                navigationManager.NavigateTo("/login");
+
+            }
+            else
+            {
+                Logger.LogError($"Register failed!");
+                loading = false;
+                ToastService.ShowToast("Register Failed! ", ToastLevel.Error);
+            }
+        }
+        catch(Exception ex){
+            loading = false;
+            throw new Exception(ex.Message);
+        }
+    }
+    public class ApiResponse
+    {
+        public string? Message { get; set; }
+    }
+}

@@ -1,0 +1,79 @@
+﻿@page "/dashboard"
+<PageTitle>Authors</PageTitle>
+<div class="container-fluid my-4">
+    <!-- Dashboard Header -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-4 fw-bold">Welcome to Your Dashboard</h1>
+            <p class="text-muted">Manage your Authors, Books, and Platform activities at a glance.</p>
+        </div>
+        <div class="row g-4">
+            <!-- Card 1: Total Authors -->
+            <div class="col-md-3 d-flex">
+                <div class="card border-0 shadow-sm bg-gradient-primary text-white flex-fill">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Authors</h5>
+                        <h3 class="display-6 fw-bold">12</h3>
+                        <p class="card-text">Registered authors on the platform.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Total Users -->
+            <div class="col-md-3 d-flex">
+                <div class="card border-0 shadow-sm bg-gradient-secondary text-white flex-fill">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Users</h5>
+                        <h3 class="display-6 fw-bold">12</h3>
+                        <p class="card-text">Users registered on the platform.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Active Books -->
+            <div class="col-md-3 d-flex">
+                <div class="card border-0 shadow-sm bg-gradient-success text-white flex-fill">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Active Books</h5>
+                        <h3 class="display-6 fw-bold">12</h3>
+                        <p class="card-text">Books currently active on the platform.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Pending Approvals -->
+            <div class="col-md-3 d-flex">
+                <div class="card border-0 shadow-sm bg-gradient-warning text-white flex-fill">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Pending Approvals</h5>
+                        <h3 class="display-6 fw-bold">12</h3>
+                        <p class="card-text">Books awaiting approval.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Quick Links Row -->
+        <div class="row my-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Quick Links</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <a href="/author/index" class="text-decoration-none">Manage Authors</a>
+                            </li>
+                            <li class="list-group-item">
+                                <a href="/book/index" class="text-decoration-none">Manage Books</a>
+                            </li>
+                            <li class="list-group-item">
+                                <a href="/settings" class="text-decoration-none">Platform Settings</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

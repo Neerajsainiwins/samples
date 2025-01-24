@@ -1,0 +1,91 @@
+﻿@page "/users/login"
+@attribute [AllowAnonymous]
+@inject ILogger<LoginUserDto> Logger
+@inject IAuthenticationService authenticationService
+@inject IJSRuntime JSRuntime
+@using Microsoft.AspNetCore.Authorization
+
+
+<div class="login-wrapper">
+    <div class="login-wrapper-inner">
+        <h4 class="text-white">Login</h4>
+            <div class="login-wrapper-body">
+                <EditForm Model="@user" OnValidSubmit="LoginApi" FormName="loginForm">
+                    <DataAnnotationsValidator />
+                    <div class="form-group mb-3">
+                    <labe class="text-white">Username</labe>
+                    <InputText id="username" @bind-Value="user.Email" class="form-control text-white" />
+                        <ValidationMessage For="@(() => user.Email)" />
+                    </div>
+                    <div class="form-group mb-3">
+                    <label class="text-white">Password</label>
+                    <InputText @bind-Value="user.Password" type="password" id="password" class="form-control text-white" />
+                        <ValidationMessage For="@(() => user.Password)" />
+                    </div>
+                    <div>
+                    <button disabled="@loading" class="btn btn-primary w-100 btn-sm py-2" type="submit">
+                            @if (loading)
+                            {
+                                <span class="spinner-border spinner-border-sm mr-1"></span>
+                            }
+                            Login
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        <div class="d-flex  text-white justify-content-center mt-2">
+                <span>Don't have an account?</span>
+            <NavLink href="Register" class="ms-2  text-white font-weight-bold">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span>Sign Up
+            </NavLink>
+        </div>
+        <div class="d-flex  text-white justify-content-center mt-2">
+            <NavLink href="ForgotPassword" class="ms-2  text-white font-weight-bold">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span>Forgot Password?
+            </NavLink>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+
+    [SupplyParameterFromForm]
+    LoginUserDto user { get; set; } = new LoginUserDto();
+    AuthResponse token { get; set; } = new AuthResponse();
+    private bool loginSuccessful;
+    private bool isWebAssembly;
+    private bool loading;
+
+    private async Task LoginApi()
+    {
+        try
+        {
+            loading = true;
+            var response = await authenticationService.AuthenticateAsync(user);
+            if (response)
+            {
+                Logger.LogInformation($"Logged Successfull!.. ");
+                navigationManager.NavigateTo("/admin/Dashboard");
+                ToastService.ShowToast("Login successfully!", ToastLevel.Success);
+            }
+            else{
+                Logger.LogError($"Login failed!"); 
+                loading = false;
+                ToastService.ShowToast("Login Failed!  Please check your credentials and try again", ToastLevel.Error);
+            }
+        }
+        catch (ApiException ex)
+        {
+            loading = false;
+            Logger.LogError($"Error occurred while Logging the author. {ex.Message}");
+            throw new Exception(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Unexpected error: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", "An unexpected error occurred. Please try again later.");
+        }
+    }
+}

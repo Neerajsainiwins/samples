@@ -1,0 +1,66 @@
+﻿@page "/ForgotPassword"
+@inject HttpClient httpclient
+@inject NavigationManager Navigation
+
+<div class="login-wrapper">
+    <div class="login-wrapper-inner">
+        <div class="login-wrapper-body">
+            <EditForm Model="@forgotPassword"  FormName="SendEmailForm">
+                <DataAnnotationsValidator />
+                <div class="form-group mb-3">
+                    <labe class="text-white">Email</labe>
+                    <InputText id="email" @bind-Value="forgotPassword.Email" class="form-control text-white" />
+                    <ValidationMessage For="@(() => forgotPassword.Email)" />
+                </div>
+                <div>
+                    <button disabled="@loading" class="btn btn-primary w-100 btn-sm py-2" type="submit" @onclick='SendEmail'>
+                        @if (loading)
+                        {
+                            <span class="spinner-border spinner-border-sm mr-1"></span>
+                        }
+                        Send
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+        <div class="d-flex  text-white justify-content-center mt-2">
+            <span>Back to login</span>
+            <NavLink href="/users/login" class="ms-2  text-white font-weight-bold">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span>Login
+            </NavLink>
+        </div>
+    </div>
+</div>
+
+
+@code{
+
+    [SupplyParameterFromForm]
+    ForgotPassword forgotPassword { get; set; } = new ForgotPassword();
+    private bool loading = false;
+
+    private async Task SendEmail()
+    {
+        try
+        {
+            loading = true;
+            var response = await http.PostAsJsonAsync("http://localhost:5093/api/Users/ForgotPassword", forgotPassword);
+            if(response.IsSuccessStatusCode)
+            {
+                loading = false;
+                ToastService.ShowToast("Reset password link sent to the email Please check!", ToastLevel.Success);
+                Navigation.NavigateTo("/");
+
+            }else
+            {
+                loading = false;
+                ToastService.ShowToast("Reset Failed! something went wrong and Please try again", ToastLevel.Error);
+            }
+
+        }
+        catch(Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+}
